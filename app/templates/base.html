@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MoBi | نظام إدارة محلات الهواتف والصيانة{% endblock %}</title>
+    
+    <!-- Local Offline CSS -->
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
+
+    <!-- Local Offline JS -->
+    <script src="/static/js/htmx.min.js"></script>
+    <script src="/static/js/alpine.min.js" defer></script>
+    <script src="/static/js/jsbarcode.all.min.js"></script>
+    <script src="/static/js/pos_scanner.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased min-h-screen flex flex-col font-sans" x-data="{ sidebarOpen: false }">
+
+    <!-- Header Navbar -->
+    <header class="bg-slate-900 text-white shadow-md z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Shop Brand -->
+                <div class="flex items-center space-x-3 space-x-reverse">
+                    <a href="/" class="flex items-center space-x-2 space-x-reverse text-xl font-bold tracking-tight text-white hover:text-blue-400 transition">
+                        <span class="p-2 bg-blue-600 rounded-lg shadow-inner">📱</span>
+                        <span>{{ shop_settings.shop_name if shop_settings else 'MoBi' }}</span>
+                    </a>
+                    <span class="bg-blue-900/60 text-blue-300 text-xs px-2.5 py-0.5 rounded-full border border-blue-700/50">
+                        Offline 100%
+                    </span>
+                </div>
+
+                <!-- Navigation Links for Quick Access -->
+                {% if current_user %}
+                <nav class="hidden md:flex items-center space-x-1 space-x-reverse">
+                    <a href="/pos" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'pos' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        🛒 نقطة البيع (POS)
+                    </a>
+                    <a href="/inventory" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'inventory' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        📦 المخزون و IMEI
+                    </a>
+                    <a href="/repairs" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'repairs' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        🔧 ورشة الصيانة
+                    </a>
+                    <a href="/customers" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'customers' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        👥 العملاء
+                    </a>
+                    {% if current_user.role == 'admin' %}
+                    <a href="/reports" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'reports' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        📊 التقارير والأرباح
+                    </a>
+                    <a href="/settings" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'settings' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                        ⚙️ الإعدادات
+                    </a>
+                    {% endif %}
+                </nav>
+                {% endif %}
+
+                <!-- User profile & Logout -->
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    {% if current_user %}
+                    <div class="flex items-center space-x-2 space-x-reverse text-sm">
+                        <span class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-blue-400">
+                            {{ current_user.full_name[:1] }}
+                        </span>
+                        <div class="hidden sm:block text-right">
+                            <p class="font-semibold text-gray-200">{{ current_user.full_name }}</p>
+                            <span class="text-xs text-blue-400">
+                                {% if current_user.role == 'admin' %}مدير النظام
+                                {% elif current_user.role == 'cashier' %}كاشير
+                                {% elif current_user.role == 'technician' %}فني صيانة{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="/auth/logout" class="text-xs bg-red-600/80 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-md transition shadow">
+                        خروج
+                    </a>
+                    {% else %}
+                    <a href="/auth/login" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md transition">
+                        دخول
+                    </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Flash Messages / Toast Alerts -->
+        {% if error_msg %}
+        <div class="mb-4 bg-red-50 border-r-4 border-red-500 p-4 rounded-md shadow-sm flex items-center justify-between" x-data="{ show: true }" x-show="show">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <span class="text-red-500 text-lg">⚠️</span>
+                <p class="text-sm text-red-700 font-semibold">{{ error_msg }}</p>
+            </div>
+            <button @click="show = false" class="text-red-500 hover:text-red-700 font-bold">&times;</button>
+        </div>
+        {% endif %}
+
+        {% if success_msg %}
+        <div class="mb-4 bg-green-50 border-r-4 border-green-500 p-4 rounded-md shadow-sm flex items-center justify-between" x-data="{ show: true }" x-show="show">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <span class="text-green-500 text-lg">✅</span>
+                <p class="text-sm text-green-700 font-semibold">{{ success_msg }}</p>
+            </div>
+            <button @click="show = false" class="text-green-500 hover:text-green-700 font-bold">&times;</button>
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Footer (Screen only) -->
+    <footer class="bg-white border-t border-gray-200 py-3 text-center text-xs text-gray-500 no-print mt-auto">
+        <p>{{ shop_settings.shop_name if shop_settings else 'MoBi' }} &bull; نظام تشغيلي محلي مستقل &bull; النسخة 1.0.0</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

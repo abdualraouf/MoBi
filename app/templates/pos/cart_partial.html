@@ -1,0 +1,99 @@
+<!-- Cart Items Table Partial (HTMX Swap target) -->
+<div id="pos-cart-container" class="flex flex-col h-full justify-between">
+    
+    <!-- Items List Table -->
+    <div class="overflow-y-auto flex-1 max-h-[52vh] border-b border-gray-100">
+        {% if cart and cart|length > 0 %}
+        <table class="w-full text-right text-sm">
+            <thead class="bg-gray-50 text-gray-600 font-bold sticky top-0 border-b border-gray-200">
+                <tr>
+                    <th class="py-2.5 px-3">الصنف / الـ IMEI</th>
+                    <th class="py-2.5 px-3 text-center">السعر</th>
+                    <th class="py-2.5 px-3 text-center">الكمية</th>
+                    <th class="py-2.5 px-3 text-center">الإجمالي</th>
+                    <th class="py-2.5 px-2 text-center w-10">حذف</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for item in cart %}
+                <tr class="hover:bg-blue-50/50 transition">
+                    <td class="py-3 px-3">
+                        <div class="font-bold text-gray-800">{{ item.name }}</div>
+                        {% if item.has_imei and item.imei %}
+                        <div class="inline-flex items-center space-x-1 space-x-reverse mt-0.5">
+                            <span class="bg-amber-100 text-amber-800 text-[11px] font-mono px-2 py-0.5 rounded border border-amber-300">
+                                IMEI: {{ item.imei }}
+                            </span>
+                        </div>
+                        {% elif item.barcode %}
+                        <span class="text-[11px] text-gray-400 font-mono block">كود: {{ item.barcode }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-3 text-center font-semibold text-gray-700">
+                        {{ "%.2f"|format(item.unit_price) }}
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        {% if item.has_imei %}
+                        <span class="inline-block bg-gray-100 text-gray-700 font-bold px-2 py-1 rounded text-xs">1</span>
+                        {% else %}
+                        <div class="inline-flex items-center space-x-1 space-x-reverse border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                            <button type="button"
+                                    hx-post="/pos/update-qty"
+                                    hx-vals='{"cart_id": "{{ item.cart_id }}", "delta": -1}'
+                                    hx-target="#pos-cart-container"
+                                    class="px-2 py-1 bg-gray-100 hover:bg-red-100 hover:text-red-600 text-gray-600 font-bold transition text-xs">
+                                -
+                            </button>
+                            <span class="px-2.5 font-bold text-sm text-gray-800">{{ item.quantity }}</span>
+                            <button type="button"
+                                    hx-post="/pos/update-qty"
+                                    hx-vals='{"cart_id": "{{ item.cart_id }}", "delta": 1}'
+                                    hx-target="#pos-cart-container"
+                                    class="px-2 py-1 bg-gray-100 hover:bg-green-100 hover:text-green-600 text-gray-600 font-bold transition text-xs">
+                                +
+                            </button>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-3 text-center font-bold text-blue-600">
+                        {{ "%.2f"|format(item.unit_price * item.quantity) }}
+                    </td>
+                    <td class="py-3 px-2 text-center">
+                        <button type="button"
+                                hx-post="/pos/remove-item"
+                                hx-vals='{"cart_id": "{{ item.cart_id }}"}'
+                                hx-target="#pos-cart-container"
+                                class="text-gray-400 hover:text-red-500 font-bold transition p-1">
+                            ✕
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-16 text-gray-400">
+            <span class="text-5xl mb-3 opacity-60">🛒</span>
+            <p class="font-medium text-base">سلة البيع فارغة حالياً</p>
+            <p class="text-xs text-gray-400 mt-1">امسح باركود الصنف أو سيريال الـ IMEI للبدء</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Live Totals Bar -->
+    <div class="bg-slate-50 p-4 border-t border-gray-200">
+        <div class="flex justify-between items-center text-sm mb-2 text-gray-600">
+            <span>عدد الأصناف: <strong class="text-gray-800">{{ totals.items_count }}</strong> ({{ totals.lines_count }} سطر)</span>
+            <span>المجموع الأولي: <strong class="text-gray-800">{{ "%.2f"|format(totals.subtotal) }} {{ currency }}</strong></span>
+        </div>
+        
+        <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+            <span class="text-base font-bold text-gray-800">صافي الفاتورة:</span>
+            <span class="text-2xl font-black text-blue-600">{{ "%.2f"|format(totals.total) }} <span class="text-sm font-bold text-gray-600">{{ currency }}</span></span>
+        </div>
+    </div>
+
+    <!-- Hidden sync element for checkout panel -->
+    <input type="hidden" id="sync-subtotal" value="{{ totals.subtotal }}">
+    <input type="hidden" id="sync-total" value="{{ totals.total }}">
+</div>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>فاتورة مبيعات #{{ invoice.invoice_number }}</title>
+    <link rel="stylesheet" href="/static/css/custom.css">
+    <script src="/static/js/jsbarcode.all.min.js"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 10px;
+            font-family: 'Cairo', 'Courier New', monospace, sans-serif;
+            color: #000;
+        }
+        .receipt-card {
+            background: #fff;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .dotted-line {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+        }
+        .double-line {
+            border-top: 2px solid #000;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body onload="initPrint()">
+
+    <!-- Print Action Buttons (Screen Only) -->
+    <div class="no-print max-w-sm mx-auto mb-4 flex justify-between gap-2">
+        <button onclick="window.print()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm shadow">
+            🖨️ طباعة الفاتورة
+        </button>
+        <button onclick="window.close()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded text-sm">
+            إغلاق
+        </button>
+    </div>
+
+    <!-- Thermal Container: matches 80mm or 58mm -->
+    <div class="receipt-card {% if settings.thermal_width == '58mm' %}thermal-receipt-58{% else %}thermal-receipt-80{% endif %}">
+        
+        <!-- Header -->
+        <div style="text-align: center;">
+            <h2 style="font-size: 16px; font-weight: 900; margin: 0 0 4px 0;">{{ settings.shop_name }}</h2>
+            <div style="font-size: 11px; margin-bottom: 2px;">{{ settings.address }}</div>
+            <div style="font-size: 11px; font-weight: bold;">هاتف: {{ settings.phone }}{% if settings.secondary_phone %} | {{ settings.secondary_phone }}{% endif %}</div>
+            {% if settings.tax_number %}
+            <div style="font-size: 10px;">الرقم الضريبي: {{ settings.tax_number }}</div>
+            {% endif %}
+        </div>
+
+        <div class="dotted-line"></div>
+
+        <!-- Meta info -->
+        <div style="font-size: 11px; line-height: 1.5;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>رقم الفاتورة:</span>
+                <strong>{{ invoice.invoice_number }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>التاريخ:</span>
+                <span>{{ invoice.created_at.strftime('%Y-%m-%d %I:%M %p') }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>الكاشير:</span>
+                <span>{{ invoice.cashier.full_name }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>العميل:</span>
+                <span>{{ invoice.customer.name if invoice.customer else 'زبون نقدي' }}</span>
+            </div>
+        </div>
+
+        <div class="dotted-line"></div>
+
+        <!-- Items Table -->
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: right;">
+            <thead>
+                <tr style="border-bottom: 1px solid #000;">
+                    <th style="padding: 3px 0; text-align: right;">الصنف</th>
+                    <th style="padding: 3px 0; text-align: center; width: 15%;">الكمية</th>
+                    <th style="padding: 3px 0; text-align: center; width: 20%;">السعر</th>
+                    <th style="padding: 3px 0; text-align: left; width: 25%;">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items %}
+                <tr>
+                    <td style="padding: 4px 0; font-weight: bold;">
+                        {{ item.product_name }}
+                        {% if item.imei %}
+                        <div style="font-size: 9px; font-family: monospace; font-weight: normal;">
+                            IMEI: {{ item.imei }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 4px 0; text-align: center;">{{ item.quantity }}</td>
+                    <td style="padding: 4px 0; text-align: center;">{{ "%.2f"|format(item.unit_price) }}</td>
+                    <td style="padding: 4px 0; text-align: left; font-weight: bold;">{{ "%.2f"|format(item.total_price) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="double-line"></div>
+
+        <!-- Totals summary -->
+        <div style="font-size: 12px; line-height: 1.6;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>المجموع:</span>
+                <span>{{ "%.2f"|format(invoice.subtotal) }} {{ settings.currency }}</span>
+            </div>
+            {% if invoice.discount > 0 %}
+            <div style="display: flex; justify-content: space-between;">
+                <span>الخصم:</span>
+                <span>-{{ "%.2f"|format(invoice.discount) }} {{ settings.currency }}</span>
+            </div>
+            {% endif %}
+            <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 14px; border-top: 1px solid #000; padding-top: 2px;">
+                <span>الصافي المطلوب:</span>
+                <span>{{ "%.2f"|format(invoice.total_amount) }} {{ settings.currency }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>طريقة الدفع:</span>
+                <span>
+                    {% if invoice.payment_method == 'cash' %}نقداً (كاش)
+                    {% elif invoice.payment_method == 'card' %}بطاقة (شبكة)
+                    {% elif invoice.payment_method == 'transfer' %}تحويل بنكي
+                    {% else %}آجل (ذمة){% endif %}
+                </span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>المدفوع:</span>
+                <span>{{ "%.2f"|format(invoice.paid_amount) }} {{ settings.currency }}</span>
+            </div>
+            {% if invoice.remaining_amount > 0 %}
+            <div style="display: flex; justify-content: space-between; font-weight: bold; color: red;">
+                <span>المتبقي ذمة:</span>
+                <span>{{ "%.2f"|format(invoice.remaining_amount) }} {{ settings.currency }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="dotted-line"></div>
+
+        <!-- Barcode of invoice number -->
+        <div style="text-align: center; margin: 8px 0;">
+            <svg id="receipt-barcode"></svg>
+        </div>
+
+        <!-- Footer / Return Terms -->
+        <div style="font-size: 9px; text-align: center; line-height: 1.3; color: #333;">
+            {{ settings.invoice_footer }}
+        </div>
+
+    </div>
+
+    <script>
+    function initPrint() {
+        try {
+            JsBarcode("#receipt-barcode", "{{ invoice.invoice_number }}", {
+                format: "CODE128",
+                width: 1.4,
+                height: 35,
+                displayValue: true,
+                fontSize: 10,
+                margin: 0
+            });
+        } catch (e) {
+            console.error("Barcode generation error:", e);
+        }
+        // Auto print after half a second
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    }
+    </script>
+</body>
+</html>

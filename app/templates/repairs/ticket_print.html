@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إيصال استلام صيانة #{{ ticket.ticket_code }}</title>
+    <link rel="stylesheet" href="/static/css/custom.css">
+    <script src="/static/js/jsbarcode.all.min.js"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 10px;
+            font-family: 'Cairo', 'Courier New', monospace, sans-serif;
+            color: #000;
+        }
+        .receipt-card {
+            background: #fff;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .dotted-line {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body onload="initPrint()">
+
+    <!-- Print controls -->
+    <div class="no-print max-w-sm mx-auto mb-4 flex justify-between gap-2">
+        <button onclick="window.print()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm shadow">
+            🖨️ طباعة الإيصال والملصق
+        </button>
+        <button onclick="window.close()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded text-sm">
+            إغلاق
+        </button>
+    </div>
+
+    <!-- 1. Customer Receipt (80mm / 58mm) -->
+    <div class="receipt-card {% if settings.thermal_width == '58mm' %}thermal-receipt-58{% else %}thermal-receipt-80{% endif %} mb-6">
+        
+        <div style="text-align: center;">
+            <h2 style="font-size: 16px; font-weight: 900; margin: 0 0 4px 0;">{{ settings.shop_name }}</h2>
+            <div style="font-size: 12px; font-weight: bold; background: #000; color: #fff; padding: 2px 4px; display: inline-block; margin-bottom: 4px;">
+                إيصال استلام جهاز للصيانة
+            </div>
+            <div style="font-size: 11px;">هاتف: {{ settings.phone }}</div>
+            <div style="font-size: 10px;">{{ settings.address }}</div>
+        </div>
+
+        <div class="dotted-line"></div>
+
+        <div style="font-size: 11px; line-height: 1.5;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>رقم التذكرة:</span>
+                <strong style="font-size: 13px;">{{ ticket.ticket_code }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>التاريخ:</span>
+                <span>{{ ticket.received_at.strftime('%Y-%m-%d %I:%M %p') }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>العميل:</span>
+                <strong>{{ ticket.customer.name }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>الهاتف:</span>
+                <span>{{ ticket.customer.phone }}</span>
+            </div>
+        </div>
+
+        <div class="dotted-line"></div>
+
+        <div style="font-size: 11px; line-height: 1.5;">
+            <div><strong>نوع الجهاز:</strong> {{ ticket.device_brand }} {{ ticket.device_model }} ({{ ticket.color or '—' }})</div>
+            {% if ticket.imei %}
+            <div><strong>سيريال الـ IMEI:</strong> <span style="font-family: monospace;">{{ ticket.imei }}</span></div>
+            {% endif %}
+            {% if ticket.passcode_pattern %}
+            <div><strong>رمز القفل:</strong> <span style="font-family: monospace; font-weight: bold;">{{ ticket.passcode_pattern }}</span></div>
+            {% endif %}
+            <div style="margin-top: 4px; padding: 4px; background: #f3f4f6; border-radius: 4px;">
+                <strong>العطل المذكور:</strong> {{ ticket.reported_issue }}
+            </div>
+        </div>
+
+        <div class="dotted-line"></div>
+
+        <div style="font-size: 12px; line-height: 1.6;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>التكلفة التقديرية:</span>
+                <strong>{{ "%.2f"|format(ticket.estimated_cost) }} {{ settings.currency }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>الدفعة المقدمة (عربون):</span>
+                <span>{{ "%.2f"|format(ticket.paid_amount) }} {{ settings.currency }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid #000; padding-top: 2px;">
+                <span>المتبقي التقريبي:</span>
+                <strong>{{ "%.2f"|format(ticket.estimated_cost - ticket.paid_amount) }} {{ settings.currency }}</strong>
+            </div>
+        </div>
+
+        <!-- Ticket Barcode -->
+        <div style="text-align: center; margin: 10px 0 6px 0;">
+            <svg id="ticket-barcode-main"></svg>
+        </div>
+
+        <!-- Terms of Service -->
+        <div style="font-size: 8px; text-align: justify; line-height: 1.25; color: #333; border-top: 1px dashed #000; padding-top: 4px; white-space: pre-line;">
+            {{ settings.repair_terms }}
+        </div>
+    </div>
+
+    <!-- 2. Phone Sticker Label (Attached to the physical back of device) -->
+    <div class="barcode-sticker receipt-card" style="border: 1px solid #000; margin-top: 15px;">
+        <div style="font-weight: 900; font-size: 11px;">{{ ticket.device_model }}</div>
+        <div style="font-size: 9px;">{{ ticket.customer.name }} &bull; {{ ticket.customer.phone }}</div>
+        <svg id="ticket-barcode-sticker"></svg>
+        <div style="font-size: 9px; font-weight: bold;">
+            رمز: {{ ticket.passcode_pattern or 'بدون' }} | عطل: {{ ticket.reported_issue[:25] }}
+        </div>
+    </div>
+
+    <script>
+    function initPrint() {
+        try {
+            // Main receipt barcode
+            JsBarcode("#ticket-barcode-main", "{{ ticket.ticket_code }}", {
+                format: "CODE128",
+                width: 1.5,
+                height: 35,
+                displayValue: true,
+                fontSize: 10,
+                margin: 0
+            });
+            // Sticker barcode
+            JsBarcode("#ticket-barcode-sticker", "{{ ticket.ticket_code }}", {
+                format: "CODE128",
+                width: 1.1,
+                height: 20,
+                displayValue: true,
+                fontSize: 8,
+                margin: 0
+            });
+        } catch (e) {
+            console.error("Barcode error:", e);
+        }
+        setTimeout(() => {
+            window.print();
+        }, 300);
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}تذكرة صيانة #{{ ticket.ticket_code }} | MoBi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Top Action Nav -->
+    <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex items-center space-x-3 space-x-reverse">
+            <a href="/repairs" class="text-blue-600 hover:text-blue-800 font-bold text-sm">&larr; ورشة الصيانة</a>
+            <span class="text-gray-300">/</span>
+            <span class="font-mono bg-slate-900 text-white px-2.5 py-1 rounded text-sm font-black">
+                {{ ticket.ticket_code }}
+            </span>
+            <span class="text-lg font-black text-gray-800">{{ ticket.device_brand }} {{ ticket.device_model }}</span>
+        </div>
+
+        <div class="flex items-center space-x-2 space-x-reverse">
+            <a href="/repairs/{{ ticket.id }}/print" target="_blank"
+               class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg border border-gray-300 text-sm flex items-center space-x-1.5 space-x-reverse">
+                <span>🖨️</span>
+                <span>طباعة إيصال وملصق الهاتف</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Device & Issue Info + Consumed Parts (8 Cols) -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Device & Customer Overview -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+                <h3 class="font-bold text-base text-gray-900 border-b pb-2 flex items-center space-x-2 space-x-reverse">
+                    <span>📱</span>
+                    <span>معلومات الجهاز واستلام الصيانة</span>
+                </h3>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-xs text-gray-400 block">صاحب الجهاز</span>
+                        <strong class="text-gray-800 font-bold">{{ ticket.customer.name }}</strong>
+                        <span class="text-xs text-blue-600 block">{{ ticket.customer.phone }}</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 block">الجهاز واللون</span>
+                        <strong class="text-gray-800 font-bold">{{ ticket.device_model }}</strong>
+                        <span class="text-xs text-gray-500 block">{{ ticket.color or 'غير محدد' }}</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 block">رمز القفل / النمط</span>
+                        <strong class="text-blue-700 font-mono text-base font-bold">{{ ticket.passcode_pattern or 'بدون رمز' }}</strong>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 block">سيريال الـ IMEI</span>
+                        <span class="font-mono text-xs text-gray-700 font-bold block">{{ ticket.imei or '—' }}</span>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 text-sm">
+                    <span class="text-xs font-bold text-amber-900 block mb-1">وصف العطل من الزبون:</span>
+                    <p class="text-gray-800">{{ ticket.reported_issue }}</p>
+                </div>
+            </div>
+
+            <!-- Spare Parts Consumed Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="font-bold text-base text-gray-900 flex items-center space-x-2 space-x-reverse">
+                        <span>🛠️</span>
+                        <span>قطع الغيار المستهلكة من المخزون</span>
+                    </h3>
+                </div>
+
+                <table class="w-full text-right text-sm">
+                    <thead class="bg-gray-50 text-gray-600 text-xs font-bold">
+                        <tr>
+                            <th class="py-2.5 px-3">اسم القطعة</th>
+                            <th class="py-2.5 px-3 text-center">الكمية</th>
+                            <th class="py-2.5 px-3 text-center">التكلفة على المحل</th>
+                            <th class="py-2.5 px-3 text-center">السعر للزبون</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for part in ticket.parts %}
+                        <tr>
+                            <td class="py-3 px-3 font-bold text-gray-800">{{ part.part_name }}</td>
+                            <td class="py-3 px-3 text-center font-bold">{{ part.quantity }}</td>
+                            <td class="py-3 px-3 text-center text-gray-500">{{ "%.2f"|format(part.cost_price) }}</td>
+                            <td class="py-3 px-3 text-center font-bold text-blue-600">{{ "%.2f"|format(part.price_charged) }} {{ currency }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-6 text-gray-400 text-xs">
+                                لم يتم استهلاك قطع غيار من المخزون لهذه التذكرة حتى الآن.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Form to consume a spare part from inventory -->
+                {% if available_parts %}
+                <form method="POST" action="/repairs/{{ ticket.id }}/add-part" class="bg-gray-50 p-3 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center gap-3">
+                    <div class="flex-1 w-full">
+                        <label class="block text-xs font-bold text-gray-600 mb-1">صرف قطعة غيار من المخزون:</label>
+                        <select name="product_id" class="w-full p-2 border rounded-lg text-sm bg-white font-semibold" required>
+                            {% for part in available_parts %}
+                            <option value="{{ part.id }}">
+                                {{ part.name }} (متوفر: {{ part.quantity }} - سعر: {{ "%.2f"|format(part.sell_price) }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-xs font-bold text-gray-600 mb-1">الكمية:</label>
+                        <input type="number" name="quantity" value="1" min="1" class="w-full p-2 border rounded-lg text-sm text-center font-bold">
+                    </div>
+                    <div class="pt-5">
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition">
+                            + صرف القطعة
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Right: Status Changer & Financial Settlement (4 Cols) -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- Status Update Panel -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+                <h3 class="font-bold text-sm text-gray-800 border-b pb-2">تحديث حالة التذكرة</h3>
+                
+                <form method="POST" action="/repairs/{{ ticket.id }}/update-status" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">المرحلة الحالية:</label>
+                        <select name="status" class="w-full p-2.5 border rounded-lg text-sm font-bold bg-gray-50">
+                            <option value="received" {% if ticket.status == 'received' %}selected{% endif %}>⏳ مستلم (جديد)</option>
+                            <option value="diagnosing" {% if ticket.status == 'diagnosing' %}selected{% endif %}>🔍 قيد الفحص والتشخيص</option>
+                            <option value="waiting_parts" {% if ticket.status == 'waiting_parts' %}selected{% endif %}>📦 بانتظار توفر القطع</option>
+                            <option value="repairing" {% if ticket.status == 'repairing' %}selected{% endif %}>⚙️ قيد الإصلاح بالورشة</option>
+                            <option value="ready" {% if ticket.status == 'ready' %}selected{% endif %}>✅ جاهز لتسليم الزبون</option>
+                            <option value="delivered" {% if ticket.status == 'delivered' %}selected{% endif %}>🤝 تم التسليم واستلام المبلغ</option>
+                            <option value="unrepairable" {% if ticket.status == 'unrepairable' %}selected{% endif %}>❌ غير قابل للإصلاح (معاد)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">ملاحظات الفني وتقرير الإصلاح:</label>
+                        <textarea name="repair_notes" rows="3" placeholder="اكتب ما تم إنجازه بالجهاز..."
+                                  class="w-full p-2 border rounded-lg text-xs outline-none">{{ ticket.repair_notes or '' }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">التكلفة النهائية:</label>
+                            <input type="number" step="0.5" name="final_cost" value="{{ ticket.final_cost or ticket.estimated_cost }}"
+                                   class="w-full p-2 border rounded-lg text-sm font-bold text-center text-blue-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">المسدد (المدفوع):</label>
+                            <input type="number" step="0.5" name="paid_amount" value="{{ ticket.paid_amount }}"
+                                   class="w-full p-2 border rounded-lg text-sm font-bold text-center text-green-600">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow text-sm transition">
+                        حفظ التحديثات
+                    </button>
+                </form>
+            </div>
+
+            <!-- Financial Summary Box -->
+            <div class="bg-slate-900 text-white rounded-xl p-5 shadow space-y-3">
+                <h4 class="text-xs font-bold text-gray-400">ملخص حساب الصيانة</h4>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-300">التكلفة الإجمالية:</span>
+                    <strong class="text-base text-blue-300">{{ "%.2f"|format(ticket.final_cost or ticket.estimated_cost) }} {{ currency }}</strong>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-300">المدفوع مسبقاً:</span>
+                    <span class="text-green-400 font-bold">{{ "%.2f"|format(ticket.paid_amount) }} {{ currency }}</span>
+                </div>
+                <div class="border-t border-slate-700 pt-2 flex justify-between items-center">
+                    <span class="font-bold text-sm">المتبقي عند التسليم:</span>
+                    <strong class="text-xl font-black text-amber-400">
+                        {{ "%.2f"|format((ticket.final_cost or ticket.estimated_cost) - ticket.paid_amount) }} {{ currency }}
+                    </strong>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

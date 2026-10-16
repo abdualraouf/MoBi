@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}سجل العملاء والديون | MoBi{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ showAddCustomer: false }">
+    
+    <!-- Top Action Nav -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 flex items-center space-x-2 space-x-reverse">
+                <span>👥</span>
+                <span>سجل العملاء وحسابات الديون</span>
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">متابعة أرصدة العملاء، مبيعات الآجل، وتاريخ فواتير وأجهزة الصيانة</p>
+        </div>
+
+        <button @click="showAddCustomer = true"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl shadow transition text-sm flex items-center space-x-1.5 space-x-reverse">
+            <span>➕</span>
+            <span>إضافة عميل جديد</span>
+        </button>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right text-sm">
+                <thead class="bg-slate-900 text-white text-xs font-bold uppercase">
+                    <tr>
+                        <th class="py-3 px-4">اسم العميل</th>
+                        <th class="py-3 px-4">رقم الهاتف</th>
+                        <th class="py-3 px-4">العنوان / الملاحظات</th>
+                        <th class="py-3 px-4 text-center">الرصيد المالي (الديون)</th>
+                        <th class="py-3 px-4 text-center">عدد الفواتير</th>
+                        <th class="py-3 px-4 text-center">أجهزة الصيانة</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for c in customers %}
+                    <tr class="hover:bg-blue-50/30 transition">
+                        <td class="py-3 px-4 font-bold text-gray-900">
+                            {{ c.name }}
+                            {% if c.phone == '0000000000' %}
+                            <span class="text-[10px] bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded mr-1">عام</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 font-mono text-gray-700 font-semibold">{{ c.phone }}</td>
+                        <td class="py-3 px-4 text-xs text-gray-500">{{ c.address or '—' }}</td>
+                        <td class="py-3 px-4 text-center">
+                            {% if c.balance < 0 %}
+                            <span class="bg-red-100 text-red-800 text-xs font-black px-2.5 py-1 rounded-full border border-red-300">
+                                عليه: {{ "%.2f"|format(c.balance|abs) }} {{ currency }}
+                            </span>
+                            {% elif c.balance > 0 %}
+                            <span class="bg-green-100 text-green-800 text-xs font-black px-2.5 py-1 rounded-full border border-green-300">
+                                له: {{ "%.2f"|format(c.balance) }} {{ currency }}
+                            </span>
+                            {% else %}
+                            <span class="text-xs text-gray-400 font-bold">0.00</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-center font-bold text-blue-600">
+                            {{ c.invoices|length }}
+                        </td>
+                        <td class="py-3 px-4 text-center font-bold text-purple-600">
+                            {{ c.repairs|length }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: Add Customer -->
+    <div x-show="showAddCustomer" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4" @click.away="showAddCustomer = false">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-gray-800">إضافة عميل جديد</h3>
+                <button type="button" @click="showAddCustomer = false" class="text-gray-400 hover:text-gray-600 font-bold text-xl">&times;</button>
+            </div>
+
+            <form method="POST" action="/customers/create" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">اسم العميل *</label>
+                    <input type="text" name="name" required class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">رقم الهاتف *</label>
+                    <input type="text" name="phone" required placeholder="05xxxxxxxx" class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">العنوان أو الحي</label>
+                    <input type="text" name="address" class="w-full p-2.5 border rounded-lg text-sm outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">ملاحظات إضافية</label>
+                    <input type="text" name="notes" class="w-full p-2.5 border rounded-lg text-sm outline-none">
+                </div>
+
+                <div class="flex justify-end space-x-2 space-x-reverse pt-2">
+                    <button type="button" @click="showAddCustomer = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow">حفظ العميل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}إعدادات المحل والطابعات | MoBi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 flex items-center space-x-2 space-x-reverse">
+                <span>⚙️</span>
+                <span>إعدادات المحل والطباعة الحرارية</span>
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">تخصيص ترويسة الفواتير، العملة الافتراضية، مقاس ورق الطابعة، وشروط الصيانة</p>
+        </div>
+
+        <a href="/settings/backup-db"
+           class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow transition text-sm flex items-center space-x-2 space-x-reverse">
+            <span>💾</span>
+            <span>تحميل نسخة احتياطية من قاعدة البيانات</span>
+        </a>
+    </div>
+
+    <!-- Settings Form -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="POST" action="/settings/update" class="space-y-6 max-w-3xl">
+            
+            <!-- Store Profile -->
+            <div>
+                <h3 class="text-sm font-bold text-gray-900 border-b pb-2 mb-4">بيانات المحل وهوية الفاتورة</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">اسم المحل (يظهر أعلى الفاتورة) *</label>
+                        <input type="text" name="shop_name" value="{{ settings.shop_name }}" required
+                               class="w-full p-2.5 border rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">العملة الافتراضية *</label>
+                        <input type="text" name="currency" value="{{ settings.currency }}" required
+                               placeholder="ر.س، $، د.ك..."
+                               class="w-full p-2.5 border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">رقم الهاتف الأساسي *</label>
+                        <input type="text" name="phone" value="{{ settings.phone }}" required
+                               class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">رقم هاتف إضافي / واتساب</label>
+                        <input type="text" name="secondary_phone" value="{{ settings.secondary_phone or '' }}"
+                               class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">العنوان والموقع *</label>
+                        <input type="text" name="address" value="{{ settings.address }}" required
+                               class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">الرقم الضريبي / السجل التجاري (إن وجد)</label>
+                        <input type="text" name="tax_number" value="{{ settings.tax_number or '' }}"
+                               class="w-full p-2.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">عرض ورق الطابعة الحرارية *</label>
+                        <select name="thermal_width" class="w-full p-2.5 border rounded-lg text-sm font-bold bg-gray-50">
+                            <option value="80mm" {% if settings.thermal_width == '80mm' %}selected{% endif %}>80mm (طابعات الفواتير الكبيرة)</option>
+                            <option value="58mm" {% if settings.thermal_width == '58mm' %}selected{% endif %}>58mm (طابعات البلوتوث والمحمولة الصغيرة)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice & Repair Terms -->
+            <div>
+                <h3 class="text-sm font-bold text-gray-900 border-b pb-2 mb-4">الشروط وسياسات الضمان</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">شروط أسفل فاتورة المبيعات (سياسة الاستبدال والاسترجاع):</label>
+                        <textarea name="invoice_footer" rows="3" class="w-full p-2.5 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">{{ settings.invoice_footer }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">شروط إيصال استلام الصيانة (إخلاء المسؤولية وفترة الضمان):</label>
+                        <textarea name="repair_terms" rows="4" class="w-full p-2.5 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">{{ settings.repair_terms }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t flex justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg transition text-sm">
+                    حفظ التغييرات والإعدادات
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

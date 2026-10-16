@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة ملصقات الباركود | MoBi</title>
+    <link rel="stylesheet" href="/static/css/tailwind.min.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
+    <script src="/static/js/jsbarcode.all.min.js"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff !important; margin: 0; padding: 0; }
+        }
+        .barcode-card {
+            width: 48mm;
+            height: 28mm;
+            padding: 2mm;
+            border: 1px dashed #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-sizing: border-box;
+            page-break-inside: avoid;
+            background: #fff;
+        }
+        @media print {
+            .barcode-card {
+                border: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+
+    <!-- Controls (Screen Only) -->
+    <div class="no-print max-w-2xl mx-auto bg-white p-4 rounded-xl shadow mb-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h1 class="font-bold text-lg text-gray-800">🏷️ طباعة ملصقات الباركود للمنتجات</h1>
+            <a href="/inventory" class="text-sm text-blue-600 font-bold">&larr; عودة للمخزون</a>
+        </div>
+        
+        <form method="GET" action="/inventory/barcode-labels" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-gray-700 mb-1">اختر الصنف:</label>
+                <select name="product_id" class="w-full p-2 border rounded-lg text-sm bg-gray-50" onchange="this.form.submit()">
+                    {% for p in products %}
+                    <option value="{{ p.id }}" {% if selected_product and selected_product.id == p.id %}selected{% endif %}>
+                        {{ p.name }} - ({{ p.barcode or 'بدون باركود' }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">عدد الملصقات:</label>
+                <input type="number" name="count" value="{{ label_count or 6 }}" min="1" max="60"
+                       class="w-full p-2 border rounded-lg text-sm text-center font-bold" onchange="this.form.submit()">
+            </div>
+        </form>
+
+        <div class="flex justify-end gap-2 pt-2">
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg text-sm shadow">
+                🖨️ طباعة الملصقات
+            </button>
+        </div>
+    </div>
+
+    <!-- Sticker Sheet Layout -->
+    <div class="max-w-4xl mx-auto flex flex-wrap gap-2 justify-center">
+        {% if selected_product and selected_product.barcode %}
+            {% for i in range(label_count) %}
+            <div class="barcode-card">
+                <div class="text-[9px] font-bold text-gray-700 truncate w-full">{{ shop_name }}</div>
+                <div class="text-[10px] font-black text-gray-900 truncate w-full">{{ selected_product.name }}</div>
+                <div class="my-0.5">
+                    <svg class="barcode-svg" data-code="{{ selected_product.barcode }}"></svg>
+                </div>
+                <div class="text-[10px] font-black text-blue-800">
+                    السعر: {{ "%.2f"|format(selected_product.sell_price) }} {{ currency }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="bg-white p-8 rounded-xl text-center text-gray-500 shadow">
+            الصنف المحدد لا يملك باركود معرف. يرجى تعديل الصنف وإضافة باركود أولاً.
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const svgs = document.querySelectorAll(".barcode-svg");
+        svgs.forEach(el => {
+            const code = el.getAttribute("data-code");
+            if (code) {
+                JsBarcode(el, code, {
+                    format: "CODE128",
+                    width: 1.1,
+                    height: 25,
+                    displayValue: true,
+                    fontSize: 8,
+                    margin: 0
+                });
+            }
+        });
+    });
+    </script>
+</body>
+</html>
