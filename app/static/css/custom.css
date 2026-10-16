@@ -1,24 +1,66 @@
 /* MoBi Custom Styling & Thermal Printing Rules */
 
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+@import url('/static/fonts/cairo.css');
 
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
+    --primary: #1d4ed8;
+    --primary-hover: #1e40af;
     --secondary: #0f172a;
-    --accent: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
+    --accent: #059669;
+    --danger: #dc2626;
+    --warning: #d97706;
 }
 
 body {
     font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif;
     direction: rtl;
     text-align: right;
-    background-color: #f8fafc;
-    color: #1e293b;
+    background-color: #f1f5f9;
+    color: #0f172a;
     margin: 0;
     padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* High Contrast Form & Input Controls */
+input::placeholder, textarea::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+input, select, textarea {
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.25) !important;
+}
+
+/* High Contrast Card & Border Utilities */
+.card-high-contrast {
+    background-color: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08);
+}
+
+.table-high-contrast th {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    border-bottom: 2px solid #020617 !important;
+}
+
+.table-high-contrast td {
+    color: #0f172a !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.label-high-contrast {
+    color: #0f172a !important;
+    font-weight: 700 !important;
 }
 
 /* Custom Scrollbars */

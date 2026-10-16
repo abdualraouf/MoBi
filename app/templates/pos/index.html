@@ -6,17 +6,17 @@
 <div class="space-y-4" x-data="posApp()">
     
     <!-- Top Barcode Search & Action Bar -->
-    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-300 flex flex-col md:flex-row items-center justify-between gap-3">
         
         <!-- Barcode / IMEI / Name Input -->
         <div class="relative flex-1 w-full">
-            <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-gray-400 text-lg">
+            <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-500 text-lg font-bold">
                 🔍
             </span>
             <input type="text"
                    id="barcode-scanner-input"
                    placeholder="امسح باركود العلبة أو سيريال IMEI أو اكتب اسم الصنف ثم اضغط Enter [F2]..."
-                   class="w-full pr-10 pl-4 py-3 rounded-lg border-2 border-blue-500 bg-blue-50/20 text-gray-800 text-base font-semibold focus:outline-none focus:ring-4 focus:ring-blue-100 transition barcode-input-glow"
+                   class="w-full pr-11 pl-4 py-3 rounded-lg border-2 border-blue-600 bg-white text-slate-950 text-base font-bold focus:outline-none focus:ring-4 focus:ring-blue-200 transition barcode-input-glow shadow-inner"
                    autocomplete="off"
                    autofocus>
         </div>
@@ -27,7 +27,7 @@
                     id="btn-clear-cart"
                     hx-post="/pos/clear-cart"
                     hx-target="#pos-cart-container"
-                    class="bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 text-sm font-semibold px-4 py-2.5 rounded-lg border border-gray-200 transition flex items-center space-x-1.5 space-x-reverse">
+                    class="bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-800 text-sm font-bold px-4 py-2.5 rounded-lg border border-slate-300 hover:border-red-300 transition flex items-center space-x-1.5 space-x-reverse shadow-sm">
                 <span>🗑️</span>
                 <span>تفريغ السلة [F9]</span>
             </button>
@@ -39,13 +39,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         <!-- Left / Cart Table Column (7 Cols) -->
-        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden min-h-[62vh]">
-            <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center">
+        <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-slate-300 flex flex-col overflow-hidden min-h-[62vh]">
+            <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center border-b border-slate-950">
                 <div class="flex items-center space-x-2 space-x-reverse">
-                    <span>🛒</span>
-                    <h2 class="font-bold text-base">سلة الفاتورة الحالية</h2>
+                    <span class="text-lg">🛒</span>
+                    <h2 class="font-black text-base">سلة الفاتورة الحالية</h2>
                 </div>
-                <span class="text-xs text-blue-300 font-mono">اختصار الدفع: [F4]</span>
+                <span class="text-xs text-amber-300 font-mono font-bold bg-slate-800 px-2 py-0.5 rounded border border-slate-700">اختصار الدفع: [F4]</span>
             </div>
 
             <!-- Dynamic Cart Content Target -->
@@ -55,65 +55,65 @@
         <!-- Right / Checkout & Payment Panel (5 Cols) -->
         <div class="lg:col-span-5 flex flex-col space-y-4">
             
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-4">
                 
                 <!-- Customer Selection -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-1">العميل:</label>
+                    <label class="block text-xs font-black text-slate-900 mb-1">العميل:</label>
                     <div class="flex items-center space-x-2 space-x-reverse">
-                        <select id="checkout-customer" class="flex-1 bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                        <select id="checkout-customer" class="flex-1 bg-white border-2 border-slate-300 text-slate-900 rounded-lg p-2.5 text-sm font-bold focus:border-blue-600 outline-none">
                             {% for cust in customers %}
                             <option value="{{ cust.id }}" {% if cust.phone == '0000000000' %}selected{% endif %}>
                                 {{ cust.name }} ({{ cust.phone }})
                             </option>
                             {% endfor %}
                         </select>
-                        <button type="button" @click="showAddCustomer = true" class="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold p-2.5 rounded-lg border border-blue-200 text-sm" title="إضافة عميل جديد">
+                        <button type="button" @click="showAddCustomer = true" class="bg-blue-600 hover:bg-blue-700 text-white font-black p-2.5 rounded-lg border border-blue-700 text-sm shadow" title="إضافة عميل جديد">
                             +
                         </button>
                     </div>
                 </div>
 
                 <!-- Grand Total Display -->
-                <div class="bg-gradient-to-l from-blue-700 to-indigo-800 text-white p-4 rounded-xl shadow-inner text-center">
-                    <span class="text-xs font-semibold text-blue-200 block mb-1">المبلغ المطلوب سداده</span>
+                <div class="bg-gradient-to-l from-blue-700 to-indigo-900 text-white p-4 rounded-xl shadow-md text-center border border-blue-900">
+                    <span class="text-xs font-bold text-blue-100 block mb-1">المبلغ المطلوب سداده</span>
                     <div class="text-3xl font-black tracking-tight" x-text="netTotal.toFixed(2) + ' ' + '{{ currency }}'">
                         0.00 {{ currency }}
                     </div>
                 </div>
 
                 <!-- Discount Field -->
-                <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border border-gray-200">
-                    <span class="text-xs font-bold text-gray-700">خصم إضافي:</span>
-                    <div class="flex items-center space-x-1 space-x-reverse">
+                <div class="flex items-center justify-between bg-slate-100 p-2.5 rounded-lg border border-slate-300">
+                    <span class="text-xs font-black text-slate-900">خصم إضافي:</span>
+                    <div class="flex items-center space-x-1.5 space-x-reverse">
                         <input type="number" step="0.5" min="0" x-model.number="discount" @input="recalc()"
-                               class="w-24 text-center font-bold py-1 px-2 border border-gray-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-400">
-                        <span class="text-xs text-gray-500 font-bold">{{ currency }}</span>
+                               class="w-24 text-center font-black py-1 px-2 border-2 border-slate-400 rounded text-sm outline-none focus:border-blue-600 text-slate-900 bg-white">
+                        <span class="text-xs text-slate-800 font-black">{{ currency }}</span>
                     </div>
                 </div>
 
                 <!-- Payment Method Selector -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 mb-2">طريقة الدفع:</label>
+                    <label class="block text-xs font-black text-slate-900 mb-2">طريقة الدفع:</label>
                     <div class="grid grid-cols-4 gap-2">
                         <button type="button" @click="paymentMethod = 'cash'"
-                                :class="paymentMethod === 'cash' ? 'bg-blue-600 text-white font-bold shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                                class="py-2 text-xs rounded-lg transition border border-gray-200 text-center">
+                                :class="paymentMethod === 'cash' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                                class="py-2.5 text-xs rounded-lg transition border text-center">
                             💵 كاش
                         </button>
                         <button type="button" @click="paymentMethod = 'card'"
-                                :class="paymentMethod === 'card' ? 'bg-blue-600 text-white font-bold shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                                class="py-2 text-xs rounded-lg transition border border-gray-200 text-center">
+                                :class="paymentMethod === 'card' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                                class="py-2.5 text-xs rounded-lg transition border text-center">
                             💳 شبكة
                         </button>
                         <button type="button" @click="paymentMethod = 'transfer'"
-                                :class="paymentMethod === 'transfer' ? 'bg-blue-600 text-white font-bold shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                                class="py-2 text-xs rounded-lg transition border border-gray-200 text-center">
+                                :class="paymentMethod === 'transfer' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                                class="py-2.5 text-xs rounded-lg transition border text-center">
                             🏦 تحويل
                         </button>
                         <button type="button" @click="paymentMethod = 'debt'"
-                                :class="paymentMethod === 'debt' ? 'bg-amber-600 text-white font-bold shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                                class="py-2 text-xs rounded-lg transition border border-gray-200 text-center">
+                                :class="paymentMethod === 'debt' ? 'bg-amber-600 text-white font-black shadow-md border-amber-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                                class="py-2.5 text-xs rounded-lg transition border text-center">
                             📝 آجل
                         </button>
                     </div>
@@ -122,27 +122,27 @@
                 <!-- Paid Amount & Fast Cash Denominations -->
                 <div>
                     <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-bold text-gray-600">المبلغ المدفوع:</label>
-                        <button type="button" @click="paidAmount = netTotal" class="text-xs text-blue-600 hover:underline font-bold">
+                        <label class="text-xs font-black text-slate-900">المبلغ المدفوع:</label>
+                        <button type="button" @click="paidAmount = netTotal" class="text-xs text-blue-700 hover:text-blue-900 hover:underline font-black">
                             سداد كامل المبلغ
                         </button>
                     </div>
                     <input type="number" step="0.5" x-model.number="paidAmount" @input="recalc()"
-                           class="w-full text-center text-xl font-bold py-2 border-2 border-gray-300 rounded-lg outline-none focus:border-blue-500">
+                           class="w-full text-center text-2xl font-black py-2.5 border-2 border-slate-400 rounded-lg outline-none focus:border-blue-600 text-slate-950 bg-white">
                     
                     <!-- Quick Cash Buttons -->
                     <div class="grid grid-cols-4 gap-1.5 mt-2">
-                        <button type="button" @click="paidAmount = 50" class="text-xs bg-gray-100 hover:bg-gray-200 py-1 rounded font-bold">50</button>
-                        <button type="button" @click="paidAmount = 100" class="text-xs bg-gray-100 hover:bg-gray-200 py-1 rounded font-bold">100</button>
-                        <button type="button" @click="paidAmount = 200" class="text-xs bg-gray-100 hover:bg-gray-200 py-1 rounded font-bold">200</button>
-                        <button type="button" @click="paidAmount = 500" class="text-xs bg-gray-100 hover:bg-gray-200 py-1 rounded font-bold">500</button>
+                        <button type="button" @click="paidAmount = 50" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">50</button>
+                        <button type="button" @click="paidAmount = 100" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">100</button>
+                        <button type="button" @click="paidAmount = 200" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">200</button>
+                        <button type="button" @click="paidAmount = 500" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">500</button>
                     </div>
                 </div>
 
                 <!-- Change Due / Remaining -->
-                <div class="flex justify-between items-center bg-slate-100 p-3 rounded-lg border border-gray-200">
-                    <span class="text-sm font-bold text-gray-700" x-text="changeDue >= 0 ? 'المتبقي للزبون (الباقي):' : 'المتبقي على الزبون (ذمة):'"></span>
-                    <span class="text-lg font-black" :class="changeDue >= 0 ? 'text-green-600' : 'text-red-600'"
+                <div class="flex justify-between items-center bg-slate-100 p-3 rounded-lg border-2 border-slate-300">
+                    <span class="text-sm font-black text-slate-900" x-text="changeDue >= 0 ? 'المتبقي للزبون (الباقي):' : 'المتبقي على الزبون (ذمة):'"></span>
+                    <span class="text-xl font-black" :class="changeDue >= 0 ? 'text-emerald-700' : 'text-red-700'"
                           x-text="Math.abs(changeDue).toFixed(2) + ' ' + '{{ currency }}'">
                     </span>
                 </div>
@@ -151,7 +151,7 @@
                 <button type="button"
                         id="btn-complete-sale"
                         @click="doCheckout()"
-                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-4 rounded-xl shadow-lg hover:shadow-xl transition text-base flex items-center justify-center space-x-2 space-x-reverse">
+                        class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-3.5 px-4 rounded-xl shadow-lg hover:shadow-xl transition text-base flex items-center justify-center space-x-2 space-x-reverse border border-emerald-900">
                     <span>🖨️</span>
                     <span>إتمام البيع وطباعة الفاتورة [F4]</span>
                 </button>
@@ -163,9 +163,9 @@
     </div>
 
     <!-- Quick Products Catalog Bar below -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
-        <div class="flex items-center justify-between border-b pb-2">
-            <h3 class="font-bold text-sm text-gray-700 flex items-center space-x-2 space-x-reverse">
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-300 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="font-black text-sm text-slate-900 flex items-center space-x-2 space-x-reverse">
                 <span>⚡</span>
                 <span>الأصناف السريعة والمخزون المتوفر (انقر للإضافة الفورية)</span>
             </h3>
@@ -174,22 +174,22 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {% for prod in quick_products %}
             <div onclick="handleScannedBarcode('{{ prod.barcode or prod.id }}')"
-                 class="bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-400 p-3 rounded-xl cursor-pointer transition text-center shadow-sm hover:shadow group">
+                 class="bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 p-3 rounded-xl cursor-pointer transition text-center shadow-sm hover:shadow group">
                 <div class="text-2xl mb-1">
                     {% if prod.has_imei %}📱{% elif 'شاحن' in prod.name or 'كيبل' in prod.name %}🔌{% elif 'شاشة' in prod.name %}🛠️{% else %}📦{% endif %}
                 </div>
-                <div class="text-xs font-bold text-gray-800 line-clamp-2 group-hover:text-blue-600">
+                <div class="text-xs font-bold text-slate-900 line-clamp-2 group-hover:text-blue-700">
                     {{ prod.name }}
                 </div>
-                <div class="mt-1 font-bold text-sm text-blue-600">
+                <div class="mt-1 font-black text-sm text-blue-700">
                     {{ "%.2f"|format(prod.sell_price) }} {{ currency }}
                 </div>
                 {% if prod.has_imei %}
-                <span class="inline-block text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded mt-1 font-semibold">
+                <span class="inline-block text-[11px] bg-amber-100 text-amber-950 px-2 py-0.5 rounded mt-1 font-bold border border-amber-400">
                     يتطلب IMEI
                 </span>
                 {% else %}
-                <span class="text-[10px] text-gray-400 block mt-0.5">
+                <span class="text-xs text-slate-700 font-bold block mt-1">
                     متوفر: {{ prod.quantity }}
                 </span>
                 {% endif %}

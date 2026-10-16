@@ -48,65 +48,65 @@
     </div>
 
     <!-- Products Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">
-                <thead class="bg-slate-900 text-white text-xs uppercase font-bold">
+                <thead class="bg-slate-900 text-white text-xs uppercase font-bold border-b border-slate-950">
                     <tr>
-                        <th class="py-3 px-4">الصنف / الموديل</th>
-                        <th class="py-3 px-4">القسم</th>
-                        <th class="py-3 px-4">الباركود المصنعي</th>
-                        <th class="py-3 px-4 text-center">المخزون المتوفر</th>
-                        <th class="py-3 px-4 text-center">سعر الشراء</th>
-                        <th class="py-3 px-4 text-center">سعر البيع</th>
-                        <th class="py-3 px-4 text-center">الإجراءات</th>
+                        <th class="py-3.5 px-4">الصنف / الموديل</th>
+                        <th class="py-3.5 px-4">القسم</th>
+                        <th class="py-3.5 px-4">الباركود المصنعي</th>
+                        <th class="py-3.5 px-4 text-center">المخزون المتوفر</th>
+                        <th class="py-3.5 px-4 text-center">سعر الشراء</th>
+                        <th class="py-3.5 px-4 text-center">سعر البيع</th>
+                        <th class="py-3.5 px-4 text-center">الإجراءات</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-slate-200">
                     {% for p in products %}
-                    <tr class="hover:bg-blue-50/40 transition">
-                        <td class="py-3 px-4">
-                            <div class="font-bold text-gray-900">{{ p.name }}</div>
+                    <tr class="hover:bg-blue-50/60 transition">
+                        <td class="py-3.5 px-4">
+                            <div class="font-black text-slate-900 text-base">{{ p.name }}</div>
                             {% if p.brand or p.model %}
-                            <span class="text-xs text-gray-400">{{ p.brand or '' }} {{ p.model or '' }}</span>
+                            <span class="text-xs text-slate-600 font-bold mt-0.5 block">{{ p.brand or '' }} {{ p.model or '' }}</span>
                             {% endif %}
                         </td>
-                        <td class="py-3 px-4">
+                        <td class="py-3.5 px-4">
                             {% if p.category.type == 'phone' %}
-                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-300">
+                            <span class="bg-amber-100 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-400">
                                 📱 هاتف (IMEI)
                             </span>
                             {% elif p.category.type == 'spare_part' %}
-                            <span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-0.5 rounded-full border border-purple-300">
+                            <span class="bg-purple-100 text-purple-950 text-xs font-bold px-2.5 py-1 rounded-full border border-purple-400">
                                 🛠️ قطعة صيانة
                             </span>
                             {% else %}
-                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded-full border border-blue-300">
+                            <span class="bg-blue-100 text-blue-950 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-400">
                                 🔌 إكسسوار
                             </span>
                             {% endif %}
                         </td>
-                        <td class="py-3 px-4 font-mono text-xs text-gray-600">
-                            {{ p.barcode or 'غير محدد' }}
+                        <td class="py-3.5 px-4 font-mono text-xs text-slate-800 font-bold">
+                            {{ p.barcode or '—' }}
                         </td>
-                        <td class="py-3 px-4 text-center">
+                        <td class="py-3.5 px-4 text-center">
                             {% if p.has_imei %}
-                            <span class="font-bold text-sm {% if p.quantity > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            <span class="font-black text-sm {% if p.quantity > 0 %}text-emerald-700{% else %}text-red-700{% endif %}">
                                 {{ p.quantity }} أجهزة
                             </span>
                             {% else %}
-                            <span class="font-bold text-sm {% if p.quantity <= p.alert_quantity %}text-red-600{% else %}text-gray-800{% endif %}">
+                            <span class="font-black text-sm {% if p.quantity <= p.alert_quantity %}text-red-700{% else %}text-slate-950{% endif %}">
                                 {{ p.quantity }} {{ p.unit }}
                             </span>
                             {% if p.quantity <= p.alert_quantity %}
-                            <span class="block text-[10px] text-red-500 font-bold">⚠️ منخفض</span>
+                            <span class="block text-[11px] text-red-700 font-black">⚠️ منخفض</span>
                             {% endif %}
                             {% endif %}
                         </td>
-                        <td class="py-3 px-4 text-center font-semibold text-gray-600">
+                        <td class="py-3.5 px-4 text-center font-bold text-slate-800">
                             {{ "%.2f"|format(p.buy_price) }}
                         </td>
-                        <td class="py-3 px-4 text-center font-bold text-blue-600">
+                        <td class="py-3.5 px-4 text-center font-black text-blue-700 text-base">
                             {{ "%.2f"|format(p.sell_price) }} {{ currency }}
                         </td>
                         <td class="py-3 px-4 text-center">

@@ -15,44 +15,44 @@
     <script src="/static/js/jsbarcode.all.min.js"></script>
     <script src="/static/js/pos_scanner.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 antialiased min-h-screen flex flex-col font-sans" x-data="{ sidebarOpen: false }">
+<body class="bg-slate-100 text-slate-900 antialiased min-h-screen flex flex-col font-sans" x-data="{ sidebarOpen: false }">
 
     <!-- Header Navbar -->
-    <header class="bg-slate-900 text-white shadow-md z-30 no-print">
+    <header class="bg-slate-900 text-white shadow-md z-30 no-print border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 
                 <!-- Logo & Shop Brand -->
                 <div class="flex items-center space-x-3 space-x-reverse">
-                    <a href="/" class="flex items-center space-x-2 space-x-reverse text-xl font-bold tracking-tight text-white hover:text-blue-400 transition">
+                    <a href="/" class="flex items-center space-x-2 space-x-reverse text-xl font-black tracking-tight text-white hover:text-blue-400 transition">
                         <span class="p-2 bg-blue-600 rounded-lg shadow-inner">📱</span>
                         <span>{{ shop_settings.shop_name if shop_settings else 'MoBi' }}</span>
                     </a>
-                    <span class="bg-blue-900/60 text-blue-300 text-xs px-2.5 py-0.5 rounded-full border border-blue-700/50">
+                    <span class="bg-blue-800 text-blue-100 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-500">
                         Offline 100%
                     </span>
                 </div>
 
                 <!-- Navigation Links for Quick Access -->
                 {% if current_user %}
-                <nav class="hidden md:flex items-center space-x-1 space-x-reverse">
-                    <a href="/pos" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'pos' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                <nav class="hidden md:flex items-center space-x-1.5 space-x-reverse">
+                    <a href="/pos" class="px-3.5 py-2 rounded-lg text-sm font-bold {% if active_page == 'pos' %}bg-blue-600 text-white shadow-md{% else %}text-slate-200 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         🛒 نقطة البيع (POS)
                     </a>
-                    <a href="/inventory" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'inventory' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                    <a href="/inventory" class="px-3.5 py-2 rounded-lg text-sm font-bold {% if active_page == 'inventory' %}bg-blue-600 text-white shadow-md{% else %}text-slate-200 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         📦 المخزون و IMEI
                     </a>
-                    <a href="/repairs" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'repairs' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                    <a href="/repairs" class="px-3.5 py-2 rounded-lg text-sm font-bold {% if active_page == 'repairs' %}bg-blue-600 text-white shadow-md{% else %}text-slate-200 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         🔧 ورشة الصيانة
                     </a>
-                    <a href="/customers" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'customers' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                    <a href="/customers" class="px-3.5 py-2 rounded-lg text-sm font-bold {% if active_page == 'customers' %}bg-blue-600 text-white shadow-md{% else %}text-slate-200 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         👥 العملاء
                     </a>
                     {% if current_user.role == 'admin' %}
-                    <a href="/reports" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'reports' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                    <a href="/reports" class="px-3.5 py-2 rounded-lg text-sm font-bold {% if active_page == 'reports' %}bg-blue-600 text-white shadow-md{% else %}text-slate-200 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         📊 التقارير والأرباح
                     </a>
-                    <a href="/settings" class="px-3 py-2 rounded-md text-sm font-medium {% if active_page == 'settings' %}bg-blue-600 text-white{% else %}text-gray-300 hover:bg-slate-800 hover:text-white{% endif %} transition">
+                    <a href="/settings" class="px-3.5 py-2 rounded-lg text-sm font-bold {% if active_page == 'settings' %}bg-blue-600 text-white shadow-md{% else %}text-slate-200 hover:bg-slate-800 hover:text-white{% endif %} transition">
                         ⚙️ الإعدادات
                     </a>
                     {% endif %}
@@ -62,24 +62,24 @@
                 <!-- User profile & Logout -->
                 <div class="flex items-center space-x-4 space-x-reverse">
                     {% if current_user %}
-                    <div class="flex items-center space-x-2 space-x-reverse text-sm">
-                        <span class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-blue-400">
+                    <div class="flex items-center space-x-2.5 space-x-reverse text-sm">
+                        <span class="w-8 h-8 rounded-full bg-blue-700 text-white flex items-center justify-center font-black">
                             {{ current_user.full_name[:1] }}
                         </span>
                         <div class="hidden sm:block text-right">
-                            <p class="font-semibold text-gray-200">{{ current_user.full_name }}</p>
-                            <span class="text-xs text-blue-400">
+                            <p class="font-bold text-white leading-tight">{{ current_user.full_name }}</p>
+                            <span class="text-xs text-amber-400 font-bold">
                                 {% if current_user.role == 'admin' %}مدير النظام
                                 {% elif current_user.role == 'cashier' %}كاشير
                                 {% elif current_user.role == 'technician' %}فني صيانة{% endif %}
                             </span>
                         </div>
                     </div>
-                    <a href="/auth/logout" class="text-xs bg-red-600/80 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-md transition shadow">
+                    <a href="/auth/logout" class="text-xs bg-red-600 hover:bg-red-700 font-bold text-white px-3 py-1.5 rounded-md transition shadow">
                         خروج
                     </a>
                     {% else %}
-                    <a href="/auth/login" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md transition">
+                    <a href="/auth/login" class="text-sm bg-blue-600 hover:bg-blue-700 font-bold text-white px-4 py-2 rounded-md transition shadow">
                         دخول
                     </a>
                     {% endif %}

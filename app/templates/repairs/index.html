@@ -23,23 +23,23 @@
     </div>
 
     <!-- Status Tabs & Quick Search -->
-    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-300 flex flex-col md:flex-row items-center justify-between gap-3">
         
         <!-- Status Filter Pills -->
-        <div class="flex items-center space-x-1 space-x-reverse overflow-x-auto w-full md:w-auto pb-1 md:pb-0 text-xs font-bold">
-            <a href="/repairs" class="px-3 py-2 rounded-lg {% if not status_filter %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        <div class="flex items-center space-x-1.5 space-x-reverse overflow-x-auto w-full md:w-auto pb-1 md:pb-0 text-xs font-bold">
+            <a href="/repairs" class="px-3.5 py-2 rounded-lg {% if not status_filter %}bg-blue-600 text-white shadow-md{% else %}bg-slate-100 text-slate-900 border border-slate-300 hover:bg-slate-200{% endif %}">
                 الكل ({{ counts.all }})
             </a>
-            <a href="/repairs?status=received" class="px-3 py-2 rounded-lg {% if status_filter == 'received' %}bg-amber-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <a href="/repairs?status=received" class="px-3.5 py-2 rounded-lg {% if status_filter == 'received' %}bg-amber-600 text-white shadow-md{% else %}bg-slate-100 text-slate-900 border border-slate-300 hover:bg-slate-200{% endif %}">
                 ⏳ مستلم حديثاً ({{ counts.received }})
             </a>
-            <a href="/repairs?status=repairing" class="px-3 py-2 rounded-lg {% if status_filter == 'repairing' %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <a href="/repairs?status=repairing" class="px-3.5 py-2 rounded-lg {% if status_filter == 'repairing' %}bg-indigo-600 text-white shadow-md{% else %}bg-slate-100 text-slate-900 border border-slate-300 hover:bg-slate-200{% endif %}">
                 ⚙️ قيد الإصلاح ({{ counts.repairing }})
             </a>
-            <a href="/repairs?status=ready" class="px-3 py-2 rounded-lg {% if status_filter == 'ready' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <a href="/repairs?status=ready" class="px-3.5 py-2 rounded-lg {% if status_filter == 'ready' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-100 text-slate-900 border border-slate-300 hover:bg-slate-200{% endif %}">
                 ✅ جاهز للتسليم ({{ counts.ready }})
             </a>
-            <a href="/repairs?status=delivered" class="px-3 py-2 rounded-lg {% if status_filter == 'delivered' %}bg-gray-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <a href="/repairs?status=delivered" class="px-3.5 py-2 rounded-lg {% if status_filter == 'delivered' %}bg-slate-800 text-white shadow-md{% else %}bg-slate-100 text-slate-900 border border-slate-300 hover:bg-slate-200{% endif %}">
                 📦 تم التسليم ({{ counts.delivered }})
             </a>
         </div>
@@ -48,8 +48,8 @@
         <form method="GET" action="/repairs" class="relative w-full md:w-64">
             <input type="text" name="search" id="repair-ticket-lookup" value="{{ search_query or '' }}"
                    placeholder="امسح باركود التذكرة أو ابحث..."
-                   class="w-full pr-8 pl-3 py-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 font-mono">
-            <span class="absolute right-2.5 top-2.5 text-gray-400 text-xs">🔍</span>
+                   class="w-full pr-8 pl-3 py-2 border-2 border-slate-300 rounded-lg text-xs outline-none focus:border-blue-600 font-mono font-bold text-slate-900">
+            <span class="absolute right-2.5 top-2.5 text-slate-500 text-xs font-bold">🔍</span>
         </form>
 
     </div>
@@ -57,57 +57,57 @@
     <!-- Tickets Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for t in tickets %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-400 transition p-4 flex flex-col justify-between space-y-3">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-300 hover:border-blue-600 transition p-4 flex flex-col justify-between space-y-3">
             
             <!-- Top Card Header -->
             <div class="flex justify-between items-start">
                 <div>
-                    <span class="font-mono text-xs font-black bg-slate-900 text-white px-2 py-0.5 rounded shadow-sm">
+                    <span class="font-mono text-xs font-black bg-slate-900 text-white px-2 py-0.5 rounded shadow-sm border border-slate-950">
                         {{ t.ticket_code }}
                     </span>
-                    <h3 class="font-bold text-gray-900 text-base mt-1.5">{{ t.device_brand }} {{ t.device_model }}</h3>
-                    <div class="text-xs text-gray-500 font-medium">العميل: {{ t.customer.name }} ({{ t.customer.phone }})</div>
+                    <h3 class="font-black text-slate-950 text-base mt-1.5">{{ t.device_brand }} {{ t.device_model }}</h3>
+                    <div class="text-xs text-slate-700 font-bold mt-0.5">العميل: {{ t.customer.name }} ({{ t.customer.phone }})</div>
                 </div>
                 
                 <!-- Status Badge -->
                 <div>
                     {% if t.status == 'received' %}
-                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-300">مستلم</span>
+                    <span class="bg-amber-100 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-400">مستلم</span>
                     {% elif t.status == 'repairing' %}
-                    <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-300">قيد الإصلاح</span>
+                    <span class="bg-indigo-100 text-indigo-950 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-400">قيد الإصلاح</span>
                     {% elif t.status == 'waiting_parts' %}
-                    <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2.5 py-1 rounded-full border border-orange-300">بانتظار قطع</span>
+                    <span class="bg-orange-100 text-orange-950 text-xs font-bold px-2.5 py-1 rounded-full border border-orange-400">بانتظار قطع</span>
                     {% elif t.status == 'ready' %}
-                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-300">جاهز للتسليم</span>
+                    <span class="bg-emerald-100 text-emerald-950 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-400">جاهز للتسليم</span>
                     {% elif t.status == 'delivered' %}
-                    <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2.5 py-1 rounded-full">تم التسليم</span>
+                    <span class="bg-slate-200 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full border border-slate-300">تم التسليم</span>
                     {% else %}
-                    <span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full">غير قابل للإصلاح</span>
+                    <span class="bg-red-100 text-red-950 text-xs font-bold px-2.5 py-1 rounded-full border border-red-400">غير قابل للإصلاح</span>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Issue description & Passcode -->
-            <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-100 text-xs space-y-1">
-                <div><strong class="text-gray-700">العطل:</strong> <span class="text-gray-600">{{ t.reported_issue }}</span></div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs space-y-1">
+                <div><strong class="text-slate-950 font-black">العطل:</strong> <span class="text-slate-800 font-semibold">{{ t.reported_issue }}</span></div>
                 {% if t.passcode_pattern %}
-                <div><strong class="text-gray-700">الرمز:</strong> <span class="font-mono text-blue-600 font-bold">{{ t.passcode_pattern }}</span></div>
+                <div><strong class="text-slate-950 font-black">الرمز:</strong> <span class="font-mono text-blue-800 font-black bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">{{ t.passcode_pattern }}</span></div>
                 {% endif %}
                 {% if t.imei %}
-                <div><strong class="text-gray-700">IMEI:</strong> <span class="font-mono text-gray-500">{{ t.imei }}</span></div>
+                <div><strong class="text-slate-950 font-black">IMEI:</strong> <span class="font-mono text-slate-800 font-bold">{{ t.imei }}</span></div>
                 {% endif %}
             </div>
 
             <!-- Cost & Actions Footer -->
-            <div class="pt-2 border-t border-gray-100 flex items-center justify-between">
+            <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
                 <div>
-                    <span class="text-[11px] text-gray-400 block">التكلفة:</span>
-                    <strong class="text-sm font-bold text-blue-600">{{ "%.2f"|format(t.final_cost or t.estimated_cost) }} {{ currency }}</strong>
+                    <span class="text-xs text-slate-800 font-black block">التكلفة:</span>
+                    <strong class="text-base font-black text-blue-700">{{ "%.2f"|format(t.final_cost or t.estimated_cost) }} {{ currency }}</strong>
                 </div>
 
                 <div class="flex items-center space-x-2 space-x-reverse">
                     <a href="/repairs/{{ t.id }}/print" target="_blank"
-                       class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-1.5 px-2.5 rounded-lg border border-gray-300 transition" title="طباعة الإيصال وملصق الهاتف">
+                       class="bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold py-1.5 px-2.5 rounded-lg border border-slate-300 transition" title="طباعة الإيصال وملصق الهاتف">
                         🖨️
                     </a>
                     <a href="/repairs/{{ t.id }}"
@@ -119,9 +119,9 @@
 
         </div>
         {% else %}
-        <div class="col-span-full bg-white p-12 rounded-xl text-center text-gray-400 shadow-sm">
+        <div class="col-span-full bg-white p-12 rounded-xl text-center text-slate-600 font-bold shadow-sm border border-slate-300">
             <span class="text-4xl block mb-2">🔧</span>
-            <p class="font-bold text-base">لا توجد تذاكر صيانة في هذا القسم</p>
+            <p class="font-black text-base text-slate-800">لا توجد تذاكر صيانة في هذا القسم</p>
         </div>
         {% endfor %}
     </div>

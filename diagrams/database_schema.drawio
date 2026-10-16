@@ -1,0 +1,145 @@
+<mxfile host="65bd71144e">
+    <diagram name="هيكل قاعدة بيانات MoBi" id="mobi-database-erd">
+        <mxGraphModel dx="1600" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1300" background="#FFFFFF" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+
+                <!-- TITLE BLOCK -->
+                <mxCell id="title" value="&lt;div style=&quot;padding: 10px;&quot;&gt;&lt;b style=&quot;font-size: 20px; color: #0f172a;&quot;&gt;مخطط قاعدة بيانات نظام MoBi لمحل الهواتف ونقاط البيع والصيانة&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size: 13px; color: #334155; font-weight: bold;&quot;&gt;Entity Relationship Diagram (ERD) — بنية الجداول والعلاقات الأساسية&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fillColor=#f8fafc;strokeColor=#0f172a;strokeWidth=2;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="15" width="760" height="65" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: USERS -->
+                <mxCell id="tbl_users" value="&lt;div style=&quot;background: #0f172a; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;users (المستخدمين والأدوار)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• username&lt;/b&gt; : String(50) &lt;b style=&quot;color: #b91c1c;&quot;&gt;[Unique]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• full_name&lt;/b&gt; : String(100)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• hashed_password&lt;/b&gt; : String(255)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• role&lt;/b&gt; : &lt;b style=&quot;color: #6b21a8;&quot;&gt;String(20)&lt;/b&gt; [admin/cashier/tech]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• is_active&lt;/b&gt; : &lt;b style=&quot;color: #15803d;&quot;&gt;Boolean&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• created_at&lt;/b&gt; : DateTime&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#0f172a;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="130" width="240" height="205" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: CATEGORIES -->
+                <mxCell id="tbl_categories" value="&lt;div style=&quot;background: #0369a1; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;categories (الأقسام والتصنيفات)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• name&lt;/b&gt; : String(100)&lt;br&gt;&lt;b style=&quot;color: #0369a1;&quot;&gt;• type&lt;/b&gt; : &lt;b style=&quot;color: #0369a1;&quot;&gt;String(50)&lt;/b&gt; [phone/accessory/part]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• description&lt;/b&gt; : String(255)&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#0369a1;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="130" width="260" height="155" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: PRODUCTS -->
+                <mxCell id="tbl_products" value="&lt;div style=&quot;background: #0f766e; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;products (المنتجات والمخزون)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #0369a1;&quot;&gt;🔗 category_id&lt;/b&gt; : Integer [FK]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• name&lt;/b&gt; : String(150)&lt;br&gt;&lt;b style=&quot;color: #0f766e;&quot;&gt;• barcode&lt;/b&gt; : &lt;b style=&quot;color: #0f766e;&quot;&gt;String(100) [UPC/EAN]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• brand / model&lt;/b&gt; : String(100)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• buy_price&lt;/b&gt; : Float [التكلفة]&lt;br&gt;&lt;b style=&quot;color: #1d4ed8;&quot;&gt;• sell_price&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Float [سعر البيع]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• min_sell_price&lt;/b&gt; : Float [أدنى سعر]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• quantity&lt;/b&gt; : &lt;b style=&quot;color: #000000;&quot;&gt;Integer [الرصيد]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #b91c1c;&quot;&gt;• alert_quantity&lt;/b&gt; : &lt;b style=&quot;color: #b91c1c;&quot;&gt;Integer [حد التنبيه]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;• has_imei&lt;/b&gt; : &lt;b style=&quot;color: #b45309;&quot;&gt;Boolean [هاتف ذكي]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• unit&lt;/b&gt; : String(50)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• is_active&lt;/b&gt; : Boolean&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• created_at&lt;/b&gt; : DateTime&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#0f766e;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="330" width="270" height="345" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: PRODUCT_ITEMS (IMEI) -->
+                <mxCell id="tbl_product_items" value="&lt;div style=&quot;background: #92400e; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;product_items (تتبع أجهزة الـ IMEI)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #0f766e;&quot;&gt;🔗 product_id&lt;/b&gt; : Integer [FK]&lt;br&gt;&lt;b style=&quot;color: #92400e;&quot;&gt;• imei&lt;/b&gt; : &lt;b style=&quot;color: #92400e;&quot;&gt;String(50) [Unique, Indexed]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• imei2&lt;/b&gt; : String(50) [الشريحة 2]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• color / storage&lt;/b&gt; : String(50)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• condition&lt;/b&gt; : String(20) [new/used]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• battery_health&lt;/b&gt; : String(20)&lt;br&gt;&lt;b style=&quot;color: #15803d;&quot;&gt;• status&lt;/b&gt; : &lt;b style=&quot;color: #15803d;&quot;&gt;String(30) [in_stock/sold]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• buy_price / sell_price&lt;/b&gt; : Float&lt;br&gt;&lt;b style=&quot;color: #1d4ed8;&quot;&gt;🔗 invoice_id&lt;/b&gt; : Integer [FK, عند البيع]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• notes&lt;/b&gt; : String(255)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• created_at / sold_at&lt;/b&gt; : DateTime&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#92400e;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="730" width="270" height="315" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: CUSTOMERS -->
+                <mxCell id="tbl_customers" value="&lt;div style=&quot;background: #c2410c; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;customers (العملاء والزبائن)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• name&lt;/b&gt; : String(100)&lt;br&gt;&lt;b style=&quot;color: #c2410c;&quot;&gt;• phone&lt;/b&gt; : &lt;b style=&quot;color: #c2410c;&quot;&gt;String(30) [Unique]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• national_id&lt;/b&gt; : String(50)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• address / notes&lt;/b&gt; : String(255)&lt;br&gt;&lt;b style=&quot;color: #b91c1c;&quot;&gt;• balance&lt;/b&gt; : &lt;b style=&quot;color: #b91c1c;&quot;&gt;Float [حساب الديون]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• created_at&lt;/b&gt; : DateTime&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#c2410c;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="830" y="130" width="250" height="215" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: INVOICES -->
+                <mxCell id="tbl_invoices" value="&lt;div style=&quot;background: #1e3a8a; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;invoices (فواتير المبيعات)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #1e3a8a;&quot;&gt;• invoice_number&lt;/b&gt; : &lt;b style=&quot;color: #1e3a8a;&quot;&gt;String(50) [Unique]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #c2410c;&quot;&gt;🔗 customer_id&lt;/b&gt; : Integer [FK, اختياري]&lt;br&gt;&lt;b style=&quot;color: #0f172a;&quot;&gt;🔗 user_id&lt;/b&gt; : Integer [FK, الكاشير]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• subtotal / discount&lt;/b&gt; : Float&lt;br&gt;&lt;b style=&quot;color: #1e3a8a;&quot;&gt;• total_amount&lt;/b&gt; : &lt;b style=&quot;color: #1e3a8a;&quot;&gt;Float [الصافي]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #15803d;&quot;&gt;• paid_amount&lt;/b&gt; : &lt;b style=&quot;color: #15803d;&quot;&gt;Float [المدفوع]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #b91c1c;&quot;&gt;• remaining_amount&lt;/b&gt; : &lt;b style=&quot;color: #b91c1c;&quot;&gt;Float [المتبقي]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• payment_method&lt;/b&gt; : String(30)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• created_at&lt;/b&gt; : DateTime&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#1e3a8a;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="830" y="390" width="260" height="265" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: INVOICE_ITEMS -->
+                <mxCell id="tbl_invoice_items" value="&lt;div style=&quot;background: #1d4ed8; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;invoice_items (بنود الفاتورة)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #1e3a8a;&quot;&gt;🔗 invoice_id&lt;/b&gt; : Integer [FK]&lt;br&gt;&lt;b style=&quot;color: #0f766e;&quot;&gt;🔗 product_id&lt;/b&gt; : Integer [FK]&lt;br&gt;&lt;b style=&quot;color: #92400e;&quot;&gt;🔗 product_item_id&lt;/b&gt; : Integer [FK]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• product_name&lt;/b&gt; : String(150)&lt;br&gt;&lt;b style=&quot;color: #92400e;&quot;&gt;• imei&lt;/b&gt; : &lt;b style=&quot;color: #92400e;&quot;&gt;String(50) [لقطة IMEI]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• quantity&lt;/b&gt; : Integer&lt;br&gt;&lt;b style=&quot;color: #15803d;&quot;&gt;• buy_price&lt;/b&gt; : Float [لحساب الأرباح]&lt;br&gt;&lt;b style=&quot;color: #1d4ed8;&quot;&gt;• unit_price / total_price&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Float&lt;/b&gt;&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#1d4ed8;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="830" y="730" width="270" height="235" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: REPAIR_TICKETS -->
+                <mxCell id="tbl_repair_tickets" value="&lt;div style=&quot;background: #581c87; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;repair_tickets (تذاكر الصيانة)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #581c87;&quot;&gt;• ticket_code&lt;/b&gt; : &lt;b style=&quot;color: #581c87;&quot;&gt;String(50) [باركود التذكرة]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #c2410c;&quot;&gt;🔗 customer_id&lt;/b&gt; : Integer [FK]&lt;br&gt;&lt;b style=&quot;color: #0f172a;&quot;&gt;🔗 technician_id&lt;/b&gt; : Integer [FK, الفني]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• device_brand / model&lt;/b&gt; : String&lt;br&gt;&lt;b style=&quot;color: #92400e;&quot;&gt;• imei / color&lt;/b&gt; : String(50)&lt;br&gt;&lt;b style=&quot;color: #b91c1c;&quot;&gt;• passcode_pattern&lt;/b&gt; : &lt;b style=&quot;color: #b91c1c;&quot;&gt;String [رمز القفل]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• reported_issue&lt;/b&gt; : String(255) [العطل]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• repair_notes&lt;/b&gt; : String(500)&lt;br&gt;&lt;b style=&quot;color: #581c87;&quot;&gt;• status&lt;/b&gt; : &lt;b style=&quot;color: #581c87;&quot;&gt;String(30) [received..ready]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• estimated_cost / final_cost&lt;/b&gt; : Float&lt;br&gt;&lt;b style=&quot;color: #15803d;&quot;&gt;• paid_amount&lt;/b&gt; : &lt;b style=&quot;color: #15803d;&quot;&gt;Float [المدفوع]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• warranty_days&lt;/b&gt; : Integer [أيام الضمان]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• received_at / delivered_at&lt;/b&gt; : DateTime&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#581c87;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="230" width="280" height="395" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: REPAIR_PARTS -->
+                <mxCell id="tbl_repair_parts" value="&lt;div style=&quot;background: #6b21a8; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;repair_parts (قطع الغيار المستهلكة)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #581c87;&quot;&gt;🔗 ticket_id&lt;/b&gt; : Integer [FK]&lt;br&gt;&lt;b style=&quot;color: #0f766e;&quot;&gt;🔗 product_id&lt;/b&gt; : Integer [FK, الصنف]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• part_name&lt;/b&gt; : String(150)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• quantity&lt;/b&gt; : Integer&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• cost_price&lt;/b&gt; : Float [التكلفة]&lt;br&gt;&lt;b style=&quot;color: #6b21a8;&quot;&gt;• price_charged&lt;/b&gt; : &lt;b style=&quot;color: #6b21a8;&quot;&gt;Float [سعر الزبون]&lt;/b&gt;&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#6b21a8;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="1230" y="730" width="270" height="195" as="geometry"/>
+                </mxCell>
+
+                <!-- TABLE: SHOP_SETTINGS -->
+                <mxCell id="tbl_shop_settings" value="&lt;div style=&quot;background: #1e293b; color: #ffffff; padding: 8px 10px; font-weight: bold; font-size: 13px; text-align: center; border-radius: 6px 6px 0 0;&quot;&gt;shop_settings (إعدادات المحل والطباعة)&lt;/div&gt;&lt;div style=&quot;background: #ffffff; color: #000000; padding: 10px; font-size: 11px; line-height: 1.7; text-align: right;&quot;&gt;&lt;b style=&quot;color: #b45309;&quot;&gt;🔑 id&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;Integer [PK]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• shop_name&lt;/b&gt; : String(150)&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• phone / secondary_phone&lt;/b&gt; : String&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• address&lt;/b&gt; : String(200)&lt;br&gt;&lt;b style=&quot;color: #15803d;&quot;&gt;• currency&lt;/b&gt; : &lt;b style=&quot;color: #15803d;&quot;&gt;String(20) [ر.س/$/د.ك]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• tax_number&lt;/b&gt; : String(50)&lt;br&gt;&lt;b style=&quot;color: #1d4ed8;&quot;&gt;• thermal_width&lt;/b&gt; : &lt;b style=&quot;color: #1d4ed8;&quot;&gt;String(10) [80mm/58mm]&lt;/b&gt;&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• invoice_footer&lt;/b&gt; : Text [شروط الفاتورة]&lt;br&gt;&lt;b style=&quot;color: #000000;&quot;&gt;• repair_terms&lt;/b&gt; : Text [شروط الصيانة]&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=1;shadow=1;strokeColor=#1e293b;strokeWidth=2.5;fillColor=#ffffff;align=right;verticalAlign=top;overflow=hidden;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="420" width="260" height="265" as="geometry"/>
+                </mxCell>
+
+                <!-- RELATIONSHIPS / CONNECTORS WITH HIGH CONTRAST SOLID BADGES -->
+
+                <!-- Categories -> Products (1 to Many) -->
+                <mxCell id="rel_cat_prod" value="&lt;b style=&quot;background: #0284c7; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (تصنيف)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0284c7;strokeWidth=3;fontSize=11;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="tbl_categories" target="tbl_products">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+
+                <!-- Products -> ProductItems (1 to Many) -->
+                <mxCell id="rel_prod_items" value="&lt;b style=&quot;background: #0f766e; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (تتبع هواتف IMEI)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0f766e;strokeWidth=3;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_products" target="tbl_product_items">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+
+                <!-- Customers -> Invoices (1 to Many) -->
+                <mxCell id="rel_cust_inv" value="&lt;b style=&quot;background: #c2410c; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (فواتير العميل)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c2410c;strokeWidth=3;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_customers" target="tbl_invoices">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+
+                <!-- Invoices -> InvoiceItems (1 to Many) -->
+                <mxCell id="rel_inv_items" value="&lt;b style=&quot;background: #1e3a8a; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (بنود الفاتورة)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1e3a8a;strokeWidth=3;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_invoices" target="tbl_invoice_items">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+
+                <!-- Users -> Invoices (Cashier) -->
+                <mxCell id="rel_user_inv" value="&lt;b style=&quot;background: #0f172a; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (كاشير البيع)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0f172a;strokeWidth=2.5;fontSize=11;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_users" target="tbl_invoices">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="340" y="270"/>
+                            <mxPoint x="340" y="470"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Customers -> RepairTickets (1 to Many) -->
+                <mxCell id="rel_cust_repairs" value="&lt;b style=&quot;background: #c2410c; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (أجهزة العميل)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c2410c;strokeWidth=3;fontSize=11;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_customers" target="tbl_repair_tickets">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+
+                <!-- Users -> RepairTickets (Technician) -->
+                <mxCell id="rel_user_repair" value="&lt;b style=&quot;background: #581c87; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (الفني المسؤول)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#581c87;strokeWidth=2.5;dashed=1;fontSize=11;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_users" target="tbl_repair_tickets">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="170" y="100"/>
+                            <mxPoint x="1370" y="100"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- RepairTickets -> RepairParts (1 to Many) -->
+                <mxCell id="rel_repair_parts" value="&lt;b style=&quot;background: #6b21a8; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (القطع المستهلكة)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6b21a8;strokeWidth=3;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_repair_tickets" target="tbl_repair_parts">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+
+                <!-- Products -> RepairParts (Parts Supply) -->
+                <mxCell id="rel_prod_parts" value="&lt;b style=&quot;background: #0f766e; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (صرف من المخزون)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0f766e;strokeWidth=2.5;dashed=1;fontSize=11;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_products" target="tbl_repair_parts">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="720" y="605"/>
+                            <mxPoint x="720" y="690"/>
+                            <mxPoint x="1170" y="690"/>
+                            <mxPoint x="1170" y="828"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- Products -> InvoiceItems -->
+                <mxCell id="rel_prod_invitem" value="&lt;b style=&quot;background: #0f766e; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : N (مبيعات الأصناف)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0f766e;strokeWidth=2.5;fontSize=11;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_products" target="tbl_invoice_items">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="740" y="502"/>
+                            <mxPoint x="740" y="800"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- ProductItems -> InvoiceItems -->
+                <mxCell id="rel_imei_invitem" value="&lt;b style=&quot;background: #92400e; color: #ffffff; padding: 3px 6px; border-radius: 4px; font-size: 11px;&quot;&gt;1 : 1 (بيع هاتف IMEI)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#92400e;strokeWidth=2.5;fontSize=11;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" edge="1" parent="1" source="tbl_product_items" target="tbl_invoice_items">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

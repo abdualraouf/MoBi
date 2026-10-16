@@ -40,60 +40,60 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                     <div>
-                        <span class="text-xs text-gray-400 block">صاحب الجهاز</span>
-                        <strong class="text-gray-800 font-bold">{{ ticket.customer.name }}</strong>
-                        <span class="text-xs text-blue-600 block">{{ ticket.customer.phone }}</span>
+                        <span class="text-xs text-slate-800 font-black block mb-0.5">صاحب الجهاز</span>
+                        <strong class="text-slate-950 font-black text-base">{{ ticket.customer.name }}</strong>
+                        <span class="text-xs text-blue-700 font-bold block mt-0.5">{{ ticket.customer.phone }}</span>
                     </div>
                     <div>
-                        <span class="text-xs text-gray-400 block">الجهاز واللون</span>
-                        <strong class="text-gray-800 font-bold">{{ ticket.device_model }}</strong>
-                        <span class="text-xs text-gray-500 block">{{ ticket.color or 'غير محدد' }}</span>
+                        <span class="text-xs text-slate-800 font-black block mb-0.5">الجهاز واللون</span>
+                        <strong class="text-slate-950 font-black text-base">{{ ticket.device_model }}</strong>
+                        <span class="text-xs text-slate-700 font-bold block mt-0.5">{{ ticket.color or 'غير محدد' }}</span>
                     </div>
                     <div>
-                        <span class="text-xs text-gray-400 block">رمز القفل / النمط</span>
-                        <strong class="text-blue-700 font-mono text-base font-bold">{{ ticket.passcode_pattern or 'بدون رمز' }}</strong>
+                        <span class="text-xs text-slate-800 font-black block mb-0.5">رمز القفل / النمط</span>
+                        <strong class="text-blue-800 font-mono text-lg font-black bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-block">{{ ticket.passcode_pattern or 'بدون رمز' }}</strong>
                     </div>
                     <div>
-                        <span class="text-xs text-gray-400 block">سيريال الـ IMEI</span>
-                        <span class="font-mono text-xs text-gray-700 font-bold block">{{ ticket.imei or '—' }}</span>
+                        <span class="text-xs text-slate-800 font-black block mb-0.5">سيريال الـ IMEI</span>
+                        <span class="font-mono text-xs text-slate-900 font-black block bg-slate-100 px-2 py-1 rounded border border-slate-300">{{ ticket.imei or '—' }}</span>
                     </div>
                 </div>
 
-                <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 text-sm">
-                    <span class="text-xs font-bold text-amber-900 block mb-1">وصف العطل من الزبون:</span>
-                    <p class="text-gray-800">{{ ticket.reported_issue }}</p>
+                <div class="bg-amber-50 p-3.5 rounded-lg border-2 border-amber-300 text-sm">
+                    <span class="text-xs font-black text-amber-950 block mb-1">وصف العطل من الزبون:</span>
+                    <p class="text-slate-900 font-bold">{{ ticket.reported_issue }}</p>
                 </div>
             </div>
 
             <!-- Spare Parts Consumed Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="font-bold text-base text-gray-900 flex items-center space-x-2 space-x-reverse">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-300 p-5 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                    <h3 class="font-black text-base text-slate-900 flex items-center space-x-2 space-x-reverse">
                         <span>🛠️</span>
                         <span>قطع الغيار المستهلكة من المخزون</span>
                     </h3>
                 </div>
 
                 <table class="w-full text-right text-sm">
-                    <thead class="bg-gray-50 text-gray-600 text-xs font-bold">
+                    <thead class="bg-slate-900 text-white text-xs font-bold border-b border-slate-950">
                         <tr>
-                            <th class="py-2.5 px-3">اسم القطعة</th>
-                            <th class="py-2.5 px-3 text-center">الكمية</th>
-                            <th class="py-2.5 px-3 text-center">التكلفة على المحل</th>
-                            <th class="py-2.5 px-3 text-center">السعر للزبون</th>
+                            <th class="py-3 px-3">اسم القطعة</th>
+                            <th class="py-3 px-3 text-center">الكمية</th>
+                            <th class="py-3 px-3 text-center">التكلفة على المحل</th>
+                            <th class="py-3 px-3 text-center">السعر للزبون</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody class="divide-y divide-slate-200">
                         {% for part in ticket.parts %}
-                        <tr>
-                            <td class="py-3 px-3 font-bold text-gray-800">{{ part.part_name }}</td>
-                            <td class="py-3 px-3 text-center font-bold">{{ part.quantity }}</td>
-                            <td class="py-3 px-3 text-center text-gray-500">{{ "%.2f"|format(part.cost_price) }}</td>
-                            <td class="py-3 px-3 text-center font-bold text-blue-600">{{ "%.2f"|format(part.price_charged) }} {{ currency }}</td>
+                        <tr class="hover:bg-blue-50/50 transition">
+                            <td class="py-3.5 px-3 font-bold text-slate-900">{{ part.part_name }}</td>
+                            <td class="py-3.5 px-3 text-center font-black text-slate-900">{{ part.quantity }}</td>
+                            <td class="py-3.5 px-3 text-center font-bold text-slate-700">{{ "%.2f"|format(part.cost_price) }}</td>
+                            <td class="py-3.5 px-3 text-center font-black text-blue-700 text-base">{{ "%.2f"|format(part.price_charged) }} {{ currency }}</td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="4" class="text-center py-6 text-gray-400 text-xs">
+                            <td colspan="4" class="text-center py-8 text-slate-600 font-bold text-sm">
                                 لم يتم استهلاك قطع غيار من المخزون لهذه التذكرة حتى الآن.
                             </td>
                         </tr>
