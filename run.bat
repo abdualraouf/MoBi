@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title MoBi - Phone Shop POS & Maintenance Hub
+title MoBi - Phone Shop POS and Maintenance Hub
 echo ========================================================
 echo   Starting MoBi Desktop System (Offline 100%%)...
 echo ========================================================

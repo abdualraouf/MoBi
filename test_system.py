@@ -99,8 +99,15 @@ def run_tests():
     assert repair_res.status_code in [302, 303]
     print("  -> Passed. Repair ticket created with intake barcode.")
 
+    # 9. Test Favicon
+    print("[9/9] Testing GET /favicon.ico...")
+    fav_res = client.get("/favicon.ico")
+    assert fav_res.status_code == 200, f"Expected 200, got {fav_res.status_code}"
+    assert len(fav_res.content) > 0, "Favicon response is empty!"
+    print("  -> Passed. Official brand icon served successfully.")
+
     print("\n" + "=" * 60)
-    print("  [SUCCESS] ALL 8 TESTS PASSED! SYSTEM IS 100% OPERATIONAL.")
+    print("  [SUCCESS] ALL 9 TESTS PASSED! SYSTEM IS 100% OPERATIONAL.")
     print("=" * 60)
 
 if __name__ == "__main__":

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MoBi | نظام إدارة محلات الهواتف والصيانة{% endblock %}</title>
     
+    <!-- Official Brand Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+
     <!-- Local Offline CSS -->
     <link rel="stylesheet" href="/static/css/tailwind.min.css">
     <link rel="stylesheet" href="/static/css/custom.css">
@@ -25,7 +28,7 @@
                 <!-- Logo & Shop Brand -->
                 <div class="flex items-center space-x-3 space-x-reverse">
                     <a href="/" class="flex items-center space-x-2 space-x-reverse text-xl font-black tracking-tight text-white hover:text-blue-400 transition">
-                        <span class="p-2 bg-blue-600 rounded-lg shadow-inner">📱</span>
+                        <img src="/static/img/logo.png" alt="MoBi Logo" class="w-8 h-8 rounded-lg shadow-sm object-contain">
                         <span>{{ shop_settings.shop_name if shop_settings else 'MoBi' }}</span>
                     </a>
                     <span class="bg-blue-800 text-blue-100 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-500">

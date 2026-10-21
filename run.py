@@ -5,8 +5,31 @@ import socket
 import threading
 import urllib.request
 import webbrowser
-from app.config import APP_TITLE
+from app.config import APP_TITLE, DATABASE_PATH, VERSION
 from app.main import app
+
+BANNER = r"""
+  __  __       ____  _ 
+ |  \/  | ___ | __ )(_)
+ | |\/| |/ _ \|  _ \| |
+ | |  | | (_) | |_) | |
+ |_|  |_|\___/|____/|_|  v""" + VERSION + r""" (Offline 100%)
+============================================================
+  MoBi - Phone Shop Management & POS System
+============================================================
+"""
+
+def minimize_console():
+    """Minimize the console window to the taskbar on Windows."""
+    try:
+        if sys.platform == "win32":
+            import ctypes
+            hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+            if hwnd != 0:
+                # SW_SHOWMINNOACTIVE = 7 (minimize without stealing focus from desktop window)
+                ctypes.windll.user32.ShowWindow(hwnd, 7)
+    except Exception:
+        pass
 
 def get_free_port() -> int:
     """Find an available ephemeral port to prevent port conflicts (WinError 10048)."""
@@ -15,14 +38,14 @@ def get_free_port() -> int:
         return s.getsockname()[1]
 
 def start_uvicorn(port: int):
-    """Run Uvicorn ASGI server quietly in the background."""
+    """Run Uvicorn ASGI server with verbose access logs for debugging."""
     import uvicorn
     config = uvicorn.Config(
         app,
         host="127.0.0.1",
         port=port,
-        log_level="warning",
-        access_log=False
+        log_level="info",
+        access_log=True,
     )
     server = uvicorn.Server(config)
     server.run()
@@ -40,14 +63,14 @@ def wait_for_server(port: int, timeout: float = 10.0) -> bool:
     return False
 
 def main():
-    print("=" * 65)
-    print(f"   {APP_TITLE} (Offline 100%) - Desktop Shell")
-    print("=" * 65)
+    print(BANNER)
 
     browser_mode = "--browser" in sys.argv
 
     port = get_free_port()
-    print(f"[*] Allocated dynamic local port: {port}")
+    print(f"[*] Local Port     : {port}")
+    print(f"[*] Database Path  : {DATABASE_PATH}")
+    print("[*] Starting ASGI Server with verbose access logs...")
 
     # Start Uvicorn in background daemon thread
     server_thread = threading.Thread(target=start_uvicorn, args=(port,), daemon=True)
@@ -59,7 +82,8 @@ def main():
         sys.exit(1)
 
     url = f"http://127.0.0.1:{port}"
-    print(f"[OK] Local server active at: {url}")
+    print(f"[OK] MoBi server active at : {url}")
+    print("[*] Minimizing console to taskbar. Real-time logs will stream below...\n")
 
     if not browser_mode:
         try:
@@ -72,7 +96,9 @@ def main():
             loc.original_localization['global.quit'] = 'إغلاق النظام'
             loc.original_localization['global.cancel'] = 'إلغاء'
 
-            print("[*] Launching native desktop window (Microsoft WebView2)...")
+            # Auto-minimize the console window to the taskbar
+            minimize_console()
+
             window = webview.create_window(
                 title=f"{APP_TITLE} (Offline 100%)",
                 url=url,
@@ -82,7 +108,7 @@ def main():
                 confirm_close=True,
                 text_select=True,
             )
-            webview.start()
+            webview.start(debug=False)
             print("\n[OK] MoBi window closed. Application terminated cleanly.")
             sys.exit(0)
         except Exception as e:
@@ -90,6 +116,7 @@ def main():
             print("[*] Falling back to default web browser...")
 
     # Fallback mode (browser)
+    minimize_console()
     print(f"[*] Opening browser at: {url}")
     webbrowser.open(url)
     try:

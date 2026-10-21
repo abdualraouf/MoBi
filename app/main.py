@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from app.config import APP_TITLE, VERSION, STATIC_DIR
 from app.database_init import init_db
@@ -35,6 +35,11 @@ def on_startup():
 def redirect_exception_handler(request: Request, exc: RedirectException):
     """Handle unauthenticated access and redirect to login page."""
     return RedirectResponse(url=exc.url, status_code=303)
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    """Serve the official MoBi brand icon."""
+    return FileResponse(STATIC_DIR / "favicon.ico")
 
 @app.get("/")
 def root_index(request: Request):
