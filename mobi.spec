@@ -28,7 +28,12 @@ a = Analysis(
         'sqlite3',
         'bcrypt',
         'itsdangerous',
-        'python_multipart'
+        'python_multipart',
+        'webview',
+        'webview.platforms.winforms',
+        'clr',
+        'clr_loader',
+        'pythonnet'
     ],
     hookspath=[],
     hooksconfig={},
@@ -56,7 +61,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

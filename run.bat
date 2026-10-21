@@ -1,13 +1,18 @@
 @echo off
-title MoBi - تشغيل نظام محل الهواتف والصيانة
-echo ===================================================
-echo جاري تشغيل نظام MoBi لمحل الهواتف والصيانة...
-echo ===================================================
+chcp 65001 >nul
+title MoBi - Phone Shop POS & Maintenance Hub
+echo ========================================================
+echo   Starting MoBi Desktop System (Offline 100%%)...
+echo ========================================================
 
 if exist venv\Scripts\python.exe (
-    venv\Scripts\python.exe run.py
+    venv\Scripts\python.exe run.py %*
 ) else (
-    python run.py
+    python run.py %*
 )
 
-pause
+if %errorlevel% neq 0 (
+    echo.
+    echo [!] Application stopped with an exit code.
+    pause
+)
