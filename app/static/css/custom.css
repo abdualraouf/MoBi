@@ -1,6 +1,7 @@
 /* MoBi Custom Styling & Thermal Printing Rules */
 
 @import url('/static/fonts/cairo.css');
+@import url('/static/css/mobi-tokens.css');
 
 :root {
     --primary: #1d4ed8;
@@ -29,9 +30,19 @@ input::placeholder, textarea::placeholder {
     opacity: 1 !important;
 }
 
-input, select, textarea {
+html:not(.dark) input,
+html:not(.dark) select,
+html:not(.dark) textarea {
     color: #0f172a !important;
     border-color: #94a3b8 !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -46,6 +57,11 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08);
 }
 
+html.dark .card-high-contrast {
+    background-color: #1e293b !important;
+    border: 1.5px solid #334155 !important;
+}
+
 .table-high-contrast th {
     background-color: #0f172a !important;
     color: #ffffff !important;
@@ -53,14 +69,29 @@ input:focus, select:focus, textarea:focus {
     border-bottom: 2px solid #020617 !important;
 }
 
+html.dark .table-high-contrast th {
+    background-color: #020617 !important;
+    color: #ffffff !important;
+    border-bottom: 2px solid #1e293b !important;
+}
+
 .table-high-contrast td {
     color: #0f172a !important;
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
+html.dark .table-high-contrast td {
+    color: #f8fafc !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
 .label-high-contrast {
     color: #0f172a !important;
     font-weight: 700 !important;
+}
+
+html.dark .label-high-contrast {
+    color: #f8fafc !important;
 }
 
 /* Custom Scrollbars */
@@ -96,6 +127,81 @@ input:focus, select:focus, textarea:focus {
 @keyframes scanPulse {
     0% { background-color: rgba(16, 185, 129, 0.2); }
     100% { background-color: transparent; }
+}
+
+/* Navigation Icon Pill with Smooth Expandable Text */
+.nav-tab-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    background-color: transparent;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    border: 1px solid transparent;
+    margin-left: 0;
+    white-space: nowrap;
+}
+
+.nav-tab-pill:hover {
+    background-color: #1e293b;
+    color: #ffffff;
+    padding: 0.45rem 0.75rem;
+    border-color: #334155;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    margin-left: -16px;
+}
+
+.nav-tab-pill.active {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    padding: 0.45rem 0.85rem;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);
+    border-color: #1d4ed8;
+    margin-left: 0;
+}
+
+.nav-tab-pill .nav-label {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease, margin 0.2s ease;
+    margin-right: 0;
+}
+
+.nav-tab-pill:hover .nav-label {
+    max-width: 140px;
+    opacity: 1;
+    margin-right: 0.4rem;
+}
+
+.nav-tab-pill.active .nav-label {
+    max-width: 140px;
+    opacity: 1;
+    margin-right: 0.4rem;
+}
+
+.nav-tab-pill .nav-icon {
+    width: 1.35rem;
+    height: 1.35rem;
+    flex-shrink: 0;
+    stroke: currentColor;
+    transition: transform 0.2s ease, stroke 0.2s ease;
+}
+
+.nav-tab-pill:hover .nav-icon {
+    transform: scale(1.1);
+    stroke: #93c5fd;
+}
+
+.nav-tab-pill.active .nav-icon {
+    transform: scale(1.05);
+    stroke: #ffffff;
 }
 
 /* Thermal Receipt Printing Rules (80mm & 58mm) */
