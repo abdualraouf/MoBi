@@ -1,12 +1,13 @@
+{% set shop = shop_settings if shop_settings is defined and shop_settings else get_shop_settings() %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MoBi | نظام إدارة محلات الهواتف والصيانة{% endblock %}</title>
+    <title>{% block title %}{{ shop.shop_name if shop else 'MoBi' }}{% endblock %}</title>
     
-    <!-- Official Brand Favicon -->
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <!-- Brand Favicon (Custom Shop Icon or MoBi Official) -->
+    <link rel="icon" type="image/x-icon" href="{{ shop.logo_path if shop and shop.logo_path else '/static/favicon.ico' }}">
 
     <!-- Local Offline CSS -->
     <link rel="stylesheet" href="/static/css/tailwind.min.css">
@@ -40,8 +41,8 @@
                 <!-- Logo & Shop Brand -->
                 <div class="flex items-center space-x-3 space-x-reverse">
                     <a href="/" class="flex items-center space-x-2 space-x-reverse text-xl font-black tracking-tight text-white hover:text-blue-400 transition">
-                        <img src="/static/img/logo.png" alt="MoBi Logo" class="w-8 h-8 rounded-lg shadow-sm object-contain">
-                        <span>{{ shop_settings.shop_name if shop_settings else 'MoBi' }}</span>
+                        <img src="{{ shop.logo_path if shop and shop.logo_path else '/static/img/logo.png' }}" alt="{{ shop.shop_name if shop else 'MoBi' }}" class="w-8 h-8 rounded-lg shadow-sm object-contain bg-white/10 p-0.5">
+                        <span>{{ shop.shop_name if shop else 'MoBi' }}</span>
                     </a>
                 </div>
 
@@ -167,7 +168,7 @@
 
     <!-- Global Footer (Screen only) -->
     <footer class="bg-white border-t border-gray-200 py-3 text-center text-xs text-gray-500 no-print mt-auto">
-        <p>{{ shop_settings.shop_name if shop_settings else 'MoBi' }} &bull; نظام تشغيلي محلي مستقل &bull; النسخة 1.0.0</p>
+        <p>{{ shop.shop_name if shop else 'MoBi' }} &bull; نظام تشغيلي محلي مستقل &bull; النسخة 1.0.0</p>
     </footer>
 
     <!-- Global Theme Management Script -->

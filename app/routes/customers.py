@@ -1,9 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from app.config import TEMPLATES_DIR
+from app.template_engine import templates
 from app.database import get_db
 from app.models.customer import Customer
 from app.models.settings import ShopSettings
@@ -11,7 +10,6 @@ from app.models.user import User
 from app.routes.auth import require_user
 
 router = APIRouter(prefix="/customers", tags=["customers"])
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @router.get("", response_class=HTMLResponse)
 def list_customers(

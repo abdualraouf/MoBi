@@ -40,6 +40,11 @@
     <div class="receipt-card {% if settings.thermal_width == '58mm' %}thermal-receipt-58{% else %}thermal-receipt-80{% endif %} mb-6">
         
         <div style="text-align: center;">
+            {% if settings.logo_path %}
+            <div style="margin-bottom: 6px;">
+                <img src="{{ settings.logo_path }}" alt="Logo" style="max-height: 48px; max-width: 140px; object-fit: contain; filter: grayscale(100%) contrast(150%);">
+            </div>
+            {% endif %}
             <h2 style="font-size: 16px; font-weight: 900; margin: 0 0 4px 0;">{{ settings.shop_name }}</h2>
             <div style="font-size: 12px; font-weight: bold; background: #000; color: #fff; padding: 2px 4px; display: inline-block; margin-bottom: 4px;">
                 إيصال استلام جهاز للصيانة

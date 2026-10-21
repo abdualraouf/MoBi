@@ -38,7 +38,10 @@ def redirect_exception_handler(request: Request, exc: RedirectException):
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
-    """Serve the official MoBi brand icon."""
+    """Serve the shop brand icon or fallback to official MoBi brand icon."""
+    custom_icon = STATIC_DIR / "uploads" / "shop_icon.ico"
+    if custom_icon.exists():
+        return FileResponse(custom_icon)
     return FileResponse(STATIC_DIR / "favicon.ico")
 
 @app.get("/")

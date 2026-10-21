@@ -2,10 +2,9 @@ from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.config import TEMPLATES_DIR
+from app.template_engine import templates
 from app.database import get_db
 from app.models.invoice import Invoice, InvoiceItem
 from app.models.repair import RepairTicket
@@ -14,7 +13,6 @@ from app.models.user import User
 from app.routes.auth import require_user
 
 router = APIRouter(prefix="/reports", tags=["reports"])
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @router.get("", response_class=HTMLResponse)
 def view_reports(

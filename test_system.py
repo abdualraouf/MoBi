@@ -20,7 +20,7 @@ def run_tests():
     print("[2/8] Testing GET /auth/login...")
     res = client.get("/auth/login")
     assert res.status_code == 200, f"Expected 200, got {res.status_code}"
-    assert "نظام MoBi" in res.text
+    assert "MoBi" in res.text
     print("  -> Passed.")
 
     # 3. Test Admin Authentication
@@ -100,15 +100,78 @@ def run_tests():
     print("  -> Passed. Repair ticket created with intake barcode.")
 
     # 9. Test Favicon
-    print("[9/9] Testing GET /favicon.ico...")
+    print("[9/10] Testing GET /favicon.ico...")
     fav_res = client.get("/favicon.ico")
     assert fav_res.status_code == 200, f"Expected 200, got {fav_res.status_code}"
     assert len(fav_res.content) > 0, "Favicon response is empty!"
     print("  -> Passed. Official brand icon served successfully.")
 
+    # 10. Test Custom Shop Logo Upload & Windows ICO Generation
+    print("[10/10] Testing Custom Logo Upload, Multi-Res Windows ICO Generation, & Reset...")
+    import io
+    from PIL import Image
+    from run import get_shop_branding
+    from app.config import STATIC_DIR
+
+    # Create dummy PNG in-memory
+    test_img = Image.new("RGBA", (128, 128), color=(30, 144, 255, 255))
+    img_byte_arr = io.BytesIO()
+    test_img.save(img_byte_arr, format="PNG")
+    img_byte_arr.seek(0)
+
+    # Post logo upload to /settings/update
+    upload_res = client.post("/settings/update", data={
+        "shop_name": "المركز الذهبي للهواتف",
+        "currency": "ر.س",
+        "phone": "0501112233",
+        "secondary_phone": "0504445566",
+        "address": "طريق الملك فهد",
+        "tax_number": "300123456700003",
+        "thermal_width": "80mm",
+        "invoice_footer": "البضاعة المباعة ترد وتستبدل خلال 3 أيام",
+        "repair_terms": "الضمان شهر على قطع الغيار الأصلية"
+    }, files={
+        "logo": ("custom_logo.png", img_byte_arr, "image/png")
+    }, follow_redirects=True)
+    assert upload_res.status_code == 200
+
+    # Verify generated files
+    uploads_dir = STATIC_DIR / "uploads"
+    png_file = uploads_dir / "shop_logo.png"
+    ico_file = uploads_dir / "shop_icon.ico"
+    assert png_file.exists(), "shop_logo.png was not generated!"
+    assert ico_file.exists(), "shop_icon.ico was not generated!"
+
+    # Verify get_shop_branding() from run.py
+    title, icon = get_shop_branding()
+    assert title == "المركز الذهبي للهواتف", f"Expected 'المركز الذهبي للهواتف', got '{title}'"
+    assert icon == str(ico_file), f"Expected icon '{ico_file}', got '{icon}'"
+
+    # Verify favicon route serves the custom icon
+    custom_fav_res = client.get("/favicon.ico")
+    assert custom_fav_res.status_code == 200
+    assert len(custom_fav_res.content) == ico_file.stat().st_size
+
+    # Verify POS and Login screens reflect the new shop branding
+    pos_page = client.get("/pos").text
+    assert "المركز الذهبي للهواتف" in pos_page
+    assert "/static/uploads/shop_logo.png" in pos_page
+
+    # Verify reset logo functionality
+    reset_res = client.post("/settings/reset-logo", follow_redirects=True)
+    assert reset_res.status_code == 200
+    assert not png_file.exists(), "shop_logo.png was not deleted upon reset!"
+    assert not ico_file.exists(), "shop_icon.ico was not deleted upon reset!"
+
+    title_after_reset, icon_after_reset = get_shop_branding()
+    assert title_after_reset == "المركز الذهبي للهواتف"
+    assert icon_after_reset == str(STATIC_DIR / "favicon.ico")
+    print("  -> Passed. Custom logo uploaded, converted to Windows ICO, and reset cleanly.")
+
     print("\n" + "=" * 60)
-    print("  [SUCCESS] ALL 9 TESTS PASSED! SYSTEM IS 100% OPERATIONAL.")
+    print("  [SUCCESS] ALL 10 TESTS PASSED! SYSTEM IS 100% OPERATIONAL.")
     print("=" * 60)
 
 if __name__ == "__main__":
     run_tests()
+

@@ -1,16 +1,15 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, Response
 from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from app.config import TEMPLATES_DIR, SESSION_COOKIE_NAME
+from app.config import SESSION_COOKIE_NAME
+from app.template_engine import templates
 from app.database import get_db
 from app.models.user import User
 from app.models.settings import ShopSettings
 from app.services.auth_service import verify_password, create_session_token, verify_session_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
     """Retrieve the currently authenticated user from signed session cookie."""

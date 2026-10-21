@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}تسجيل الدخول | MoBi{% endblock %}
+{% block title %}تسجيل الدخول | {{ shop.shop_name if shop else 'MoBi' }}{% endblock %}
 
 {% block content %}
 <div class="min-h-[75vh] flex items-center justify-center">
@@ -9,9 +9,9 @@
         <!-- Header -->
         <div class="text-center mb-6">
             <div class="w-20 h-20 mx-auto mb-3">
-                <img src="/static/img/logo.png" alt="MoBi Logo" class="w-full h-full rounded-2xl shadow-md object-contain">
+                <img src="{{ shop.logo_path if shop and shop.logo_path else '/static/img/logo.png' }}" alt="{{ shop.shop_name if shop else 'MoBi' }}" class="w-full h-full rounded-2xl shadow-md object-contain bg-slate-50 p-1">
             </div>
-            <h2 class="text-2xl font-black text-slate-950">نظام MoBi لمحل الهواتف</h2>
+            <h2 class="text-2xl font-black text-slate-950">{{ shop.shop_name if shop else 'MoBi' }}</h2>
             <p class="text-xs text-slate-700 font-bold mt-1">تسجيل الدخول لنقطة البيع والصيانة</p>
         </div>
 

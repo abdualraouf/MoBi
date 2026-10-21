@@ -1,9 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from app.config import TEMPLATES_DIR
+from app.template_engine import templates
 from app.database import get_db
 from app.models.product import Product
 from app.models.customer import Customer
@@ -14,7 +13,6 @@ from app.routes.auth import require_user
 from app.services import pos_service
 
 router = APIRouter(prefix="/pos", tags=["pos"])
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @router.get("", response_class=HTMLResponse)
 def pos_main_page(

@@ -2,10 +2,9 @@ from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from app.config import TEMPLATES_DIR
+from app.template_engine import templates
 from app.database import get_db
 from app.models.repair import RepairTicket, RepairPart
 from app.models.customer import Customer
@@ -16,7 +15,6 @@ from app.models.user import User
 from app.routes.auth import require_user
 
 router = APIRouter(prefix="/repairs", tags=["repairs"])
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @router.get("", response_class=HTMLResponse)
 def list_repairs(
