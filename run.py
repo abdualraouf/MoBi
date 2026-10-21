@@ -101,6 +101,21 @@ def apply_native_icons(icon_path: str, shop_name: str = ""):
                         user32.SetClassLongW(hwnd, GCLP_HICON, hicon_big)
                         user32.SetClassLongW(hwnd, GCLP_HICONSM, hicon_small)
 
+                    # Ensure window stays full-screen/maximized and disable the restore/maximize button (keep minimize & close)
+                    try:
+                        GWL_STYLE = -16
+                        WS_MAXIMIZEBOX = 0x00010000
+                        WS_MINIMIZEBOX = 0x00020000
+                        style = user32.GetWindowLongW(hwnd, GWL_STYLE)
+                        new_style = (style | WS_MINIMIZEBOX) & ~WS_MAXIMIZEBOX
+                        user32.SetWindowLongW(hwnd, GWL_STYLE, new_style)
+                        user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE = 3
+                        # Force frame repaint
+                        SWP_FLAGS = 0x0001 | 0x0002 | 0x0004 | 0x0020  # NOSIZE | NOMOVE | NOZORDER | FRAMECHANGED
+                        user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FLAGS)
+                    except Exception:
+                        pass
+
                 if found:
                     break
 
@@ -227,6 +242,8 @@ def main():
                 min_size=(1024, 700),
                 confirm_close=True,
                 text_select=True,
+                maximized=True,
+                resizable=False,
             )
 
             # Apply native taskbar icons when window is shown
