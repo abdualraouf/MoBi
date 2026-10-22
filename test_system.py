@@ -142,7 +142,7 @@ def run_tests():
     # Post logo upload to /settings/update
     upload_res = client.post("/settings/update", data={
         "shop_name": "المركز الذهبي للهواتف",
-        "currency": "ر.س",
+        "currency": "د.ل",
         "phone": "0501112233",
         "secondary_phone": "0504445566",
         "address": "طريق الملك فهد",

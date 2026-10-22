@@ -49,7 +49,7 @@ def init_db():
                 phone="0500123456",
                 secondary_phone="0112345678",
                 address="الشارع العام - مجمع الاتصالات",
-                currency="ر.س",
+                currency="د.ل",
                 thermal_width="80mm"
             )
             db.add(settings)

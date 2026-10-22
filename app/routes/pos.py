@@ -36,7 +36,7 @@ def pos_main_page(
         "totals": totals,
         "customers": customers,
         "quick_products": quick_products,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/add-item", response_class=HTMLResponse)
@@ -58,7 +58,7 @@ def pos_add_item(
     return templates.TemplateResponse(request=request, name="pos/cart_partial.html", context={
         "cart": cart,
         "totals": totals,
-        "currency": settings.currency if settings else "ر.س",
+        "currency": settings.currency if settings else "د.ل",
         "error_msg": message if not success else None
     }, status_code=status_code, headers=headers)
 
@@ -78,7 +78,7 @@ def pos_update_qty(
     return templates.TemplateResponse(request=request, name="pos/cart_partial.html", context={
         "cart": cart,
         "totals": totals,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/remove-item", response_class=HTMLResponse)
@@ -96,7 +96,7 @@ def pos_remove_item(
     return templates.TemplateResponse(request=request, name="pos/cart_partial.html", context={
         "cart": cart,
         "totals": totals,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/clear-cart", response_class=HTMLResponse)
@@ -112,7 +112,7 @@ def pos_clear_cart(
     return templates.TemplateResponse(request=request, name="pos/cart_partial.html", context={
         "cart": [],
         "totals": totals,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/checkout")

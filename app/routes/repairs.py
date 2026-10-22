@@ -61,7 +61,7 @@ def list_repairs(
         "counts": counts,
         "status_filter": status,
         "search_query": search,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/create")
@@ -139,7 +139,7 @@ def view_ticket(
         "active_page": "repairs",
         "ticket": ticket,
         "available_parts": available_parts,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/{ticket_id}/add-part")

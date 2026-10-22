@@ -78,5 +78,5 @@ def view_reports(
         "period": period,
         "stats": stats,
         "invoices": invoices,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })

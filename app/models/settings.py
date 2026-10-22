@@ -12,7 +12,7 @@ class ShopSettings(Base):
     phone = Column(String(50), default="0500000000", nullable=False)
     secondary_phone = Column(String(50), nullable=True)
     address = Column(String(200), default="الشارع العام - مجمع الهواتف", nullable=False)
-    currency = Column(String(20), default="ر.س", nullable=False)
+    currency = Column(String(20), default="د.ل", nullable=False)
     tax_number = Column(String(50), nullable=True)
     thermal_width = Column(String(10), default="80mm", nullable=False)  # "80mm" or "58mm"
     

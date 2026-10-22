@@ -49,7 +49,7 @@ def inventory_list(
         "categories": categories,
         "search_query": search,
         "type_filter": type,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/product/add")
@@ -134,7 +134,7 @@ def product_imei_view(
         "product": product,
         "items": items,
         "in_stock_count": in_stock_count,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/product/{product_id}/imei/add")
@@ -202,5 +202,5 @@ def print_barcode_labels(
         "selected_product": selected_product,
         "label_count": max(1, min(count, 60)),
         "shop_name": settings.shop_name if settings else "MoBi",
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })

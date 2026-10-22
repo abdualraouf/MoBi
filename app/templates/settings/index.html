@@ -1,153 +1,200 @@
 {% extends "base.html" %}
 
-{% block title %}إعدادات المحل والطابعات | MoBi{% endblock %}
+{% block title %}إعدادات المحل والطباعة الحرارية | MoBi{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 w-full" x-data="{ logoPreview: '{{ settings.logo_path if settings and settings.logo_path else '' }}' }">
     
-    <!-- Header -->
-    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
+    <!-- Top Header Bar -->
+    <div class="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-black text-gray-900 flex items-center space-x-2 space-x-reverse">
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white flex items-center space-x-2 space-x-reverse">
                 <span>⚙️</span>
                 <span>إعدادات المحل والطباعة الحرارية</span>
             </h1>
-            <p class="text-xs text-slate-600 font-bold mt-1">تخصيص ترويسة الفواتير، العملة الافتراضية، مقاس ورق الطابعة، وشروط الصيانة</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">تخصيص هوية المتجر، ترويسة الفواتير، العملة الافتراضية، مقاس ورق الطابعة، وشروط الصيانة</p>
         </div>
 
-        <a href="/settings/backup-db"
-           class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow transition text-sm flex items-center space-x-2 space-x-reverse">
-            <span>💾</span>
-            <span>تحميل نسخة احتياطية من قاعدة البيانات</span>
-        </a>
+        <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+            <a href="/settings/backup-db"
+               class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow transition text-sm flex items-center space-x-2 space-x-reverse">
+                <span>💾</span>
+                <span>تحميل نسخة احتياطية من قاعدة البيانات</span>
+            </a>
+        </div>
     </div>
 
-    <!-- Settings Form -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-300 p-6">
-        <form method="POST" action="/settings/update" enctype="multipart/form-data" class="space-y-6 max-w-5xl"
-              x-data="{ logoPreview: '{{ settings.logo_path if settings and settings.logo_path else '' }}' }">
+    <!-- Main Settings Form (Full Width 12-Column Responsive Grid) -->
+    <form method="POST" action="/settings/update" enctype="multipart/form-data" class="w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- Shop Logo & Window Icon Section -->
-            <div class="bg-slate-50 border border-slate-300 rounded-xl p-5">
-                <h3 class="text-sm font-black text-slate-900 border-b border-slate-200 pb-2 mb-4 flex items-center justify-between">
-                    <span class="flex items-center gap-2">
-                        <span>🖼️</span>
-                        <span>شعار وأيقونة المحل (الشريط العلوي، عنوان ورمز النافذة، الفواتير)</span>
-                    </span>
-                    {% if settings.logo_path %}
-                    <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">شعار مخصص نشط</span>
-                    {% else %}
-                    <span class="text-xs bg-slate-200 text-slate-700 font-bold px-2.5 py-0.5 rounded-full">الشعار الافتراضي للنظام</span>
-                    {% endif %}
-                </h3>
+            <!-- Right / Primary Column: Store Profile & Terms (8 Cols on Desktop) -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Store Profile Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                    <h3 class="text-base font-black text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-3 mb-5 flex items-center gap-2">
+                        <span>🏢</span>
+                        <span>بيانات المحل وهوية الفاتورة</span>
+                    </h3>
 
-                <div class="flex flex-col sm:flex-row items-center gap-6">
-                    <!-- Preview Box -->
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center p-2 shadow-sm overflow-hidden">
-                            <template x-if="logoPreview">
-                                <img :src="logoPreview" alt="معاينة الشعار" class="w-full h-full object-contain">
-                            </template>
-                            <template x-if="!logoPreview">
-                                <img src="/static/img/logo.png" alt="الشعار الافتراضي" class="w-full h-full object-contain">
-                            </template>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-500">معاينة الشعار والأيقونة</span>
-                    </div>
-
-                    <!-- Upload Controls & Reset -->
-                    <div class="flex-1 space-y-3 w-full">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-black text-slate-800 mb-1">رفع صورة جديدة لشعار محلك (PNG, JPG, WEBP, ICO):</label>
-                            <input type="file" name="logo" accept="image/*"
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">اسم المحل (يظهر أعلى الفاتورة والشريط) *</label>
+                            <input type="text" name="shop_name" value="{{ settings.shop_name }}" required
+                                   class="w-full p-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">العملة الافتراضية *</label>
+                            <input type="text" name="currency" value="{{ settings.currency }}" required
+                                   placeholder="د.ل، $، ر.س..."
+                                   class="w-full p-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-sm font-black text-slate-900 dark:text-white text-center outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">رقم الهاتف الأساسي *</label>
+                            <input type="text" name="phone" value="{{ settings.phone }}" required dir="ltr"
+                                   class="w-full p-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition text-right">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">رقم هاتف إضافي / واتساب</label>
+                            <input type="text" name="secondary_phone" value="{{ settings.secondary_phone or '' }}" dir="ltr"
+                                   class="w-full p-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition text-right">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">العنوان والموقع *</label>
+                            <input type="text" name="address" value="{{ settings.address }}" required
+                                   class="w-full p-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">الرقم الضريبي / السجل التجاري (إن وجد)</label>
+                            <input type="text" name="tax_number" value="{{ settings.tax_number or '' }}"
+                                   class="w-full p-2.5 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">عرض ورق الطابعة الحرارية *</label>
+                            <select name="thermal_width" class="w-full p-2.5 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition">
+                                <option value="80mm" {% if settings.thermal_width == '80mm' %}selected{% endif %}>80mm (طابعات الفواتير الكبيرة القياسية)</option>
+                                <option value="58mm" {% if settings.thermal_width == '58mm' %}selected{% endif %}>58mm (طابعات البلوتوث والمحمولة الصغيرة)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms & Policies Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                    <h3 class="text-base font-black text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-3 mb-5 flex items-center gap-2">
+                        <span>📜</span>
+                        <span>الشروط وسياسات الضمان</span>
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">شروط أسفل فاتورة المبيعات (سياسة الاستبدال والاسترجاع):</label>
+                            <textarea name="invoice_footer" rows="3" class="w-full p-3 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-900 dark:text-white leading-relaxed outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition">{{ settings.invoice_footer }}</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">شروط إيصال استلام الصيانة (إخلاء المسؤولية وفترة الضمان):</label>
+                            <textarea name="repair_terms" rows="4" class="w-full p-3 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-900 dark:text-white leading-relaxed outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition">{{ settings.repair_terms }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button Bar -->
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-bold">
+                        يتم حفظ الإعدادات والشعار بشكل دائم ومستقل محلياً.
+                    </p>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-2.5 px-8 rounded-xl shadow-lg hover:shadow-xl transition text-sm flex items-center gap-2">
+                        <span>💾</span>
+                        <span>حفظ التغييرات والإعدادات</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Left / Visual Column: Logo & Windows Brand Icon (4 Cols on Desktop) -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- Logo & Windows Icon Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
+                            <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>🖼️</span>
+                                <span>شعار وأيقونة المحل</span>
+                            </h3>
+                            {% if settings.logo_path %}
+                            <span class="text-[11px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-black px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">شعار مخصص نشط</span>
+                            {% else %}
+                            <span class="text-[11px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-2.5 py-0.5 rounded-full">شعار النظام الافتراضي</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Big Preview Box -->
+                        <div class="flex flex-col items-center gap-3 my-5">
+                            <div class="w-36 h-36 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center p-3 shadow-inner overflow-hidden">
+                                <template x-if="logoPreview">
+                                    <img :src="logoPreview" alt="معاينة الشعار" class="w-full h-full object-contain">
+                                </template>
+                                <template x-if="!logoPreview">
+                                    <img src="/static/img/logo.png" alt="الشعار الافتراضي" class="w-full h-full object-contain">
+                                </template>
+                            </div>
+                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">معاينة الشعار وأيقونة النافذة</span>
+                        </div>
+
+                        <!-- Upload File Input -->
+                        <div class="space-y-3">
+                            <label class="block text-xs font-black text-slate-700 dark:text-slate-300">رفع صورة جديدة لشعار محلك:</label>
+                            <input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/x-icon"
                                    @change="const file = $event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => logoPreview = e.target.result; reader.readAsDataURL(file); }"
-                                   class="block w-full text-xs text-slate-700 file:mr-0 file:ml-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-slate-300 rounded-lg bg-white p-1">
-                            <p class="text-[11px] text-slate-500 mt-1">يتم تحويل الشعار تلقائياً إلى أيقونة Windows مدمجة (.ico) تظهر على شريط المهام وزاوية النافذة بدلاً من أيقونة بايثون.</p>
+                                   class="block w-full text-xs text-slate-700 dark:text-slate-300 file:mr-0 file:ml-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 cursor-pointer border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 p-1">
+                            
+                            <div class="p-3 bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-lg text-[11px] text-blue-900 dark:text-blue-200 leading-relaxed font-bold">
+                                💡 يتم تحويل الشعار تلقائياً إلى أيقونة Windows مدمجة (.ico) تظهر على شريط المهام وزاوية النافذة والفواتير بدلاً من أيقونة بايثون.
+                            </div>
                         </div>
-
-                        {% if settings.logo_path %}
-                        <div class="pt-2 border-t border-slate-200">
-                            <button type="submit" formaction="/settings/reset-logo" formmethod="POST"
-                                    onclick="return confirm('هل أنت متأكد من رغبتك في استعادة الشعار الافتراضي لنظام MoBi؟');"
-                                    class="text-xs text-red-600 hover:text-red-800 font-bold flex items-center gap-1.5 transition">
-                                <span>🗑️</span>
-                                <span>استعادة الشعار الافتراضي لنظام MoBi وحذف الشعار المخصص</span>
-                            </button>
-                        </div>
-                        {% endif %}
                     </div>
+
+                    {% if settings.logo_path %}
+                    <div class="pt-4 mt-6 border-t border-slate-200 dark:border-slate-800">
+                        <button type="submit" formaction="/settings/reset-logo" formmethod="POST"
+                                onclick="return confirm('هل أنت متأكد من رغبتك في استعادة الشعار الافتراضي لنظام MoBi؟');"
+                                class="w-full py-2 px-3 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-lg font-bold flex items-center justify-center gap-1.5 transition">
+                            <span>🗑️</span>
+                            <span>استعادة الشعار الافتراضي وحذف المخصص</span>
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
-            </div>
 
-            <!-- Store Profile -->
-            <div>
-                <h3 class="text-sm font-black text-slate-900 border-b border-slate-300 pb-2 mb-4">بيانات المحل وهوية الفاتورة</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">اسم المحل (يظهر أعلى الفاتورة) *</label>
-                        <input type="text" name="shop_name" value="{{ settings.shop_name }}" required
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">العملة الافتراضية *</label>
-                        <input type="text" name="currency" value="{{ settings.currency }}" required
-                               placeholder="ر.س، $، د.ك..."
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">رقم الهاتف الأساسي *</label>
-                        <input type="text" name="phone" value="{{ settings.phone }}" required
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">رقم هاتف إضافي / واتساب</label>
-                        <input type="text" name="secondary_phone" value="{{ settings.secondary_phone or '' }}"
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-black text-slate-800 mb-1">العنوان والموقع *</label>
-                        <input type="text" name="address" value="{{ settings.address }}" required
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">الرقم الضريبي / السجل التجاري (إن وجد)</label>
-                        <input type="text" name="tax_number" value="{{ settings.tax_number or '' }}"
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">عرض ورق الطابعة الحرارية *</label>
-                        <select name="thermal_width" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 bg-slate-50">
-                            <option value="80mm" {% if settings.thermal_width == '80mm' %}selected{% endif %}>80mm (طابعات الفواتير الكبيرة)</option>
-                            <option value="58mm" {% if settings.thermal_width == '58mm' %}selected{% endif %}>58mm (طابعات البلوتوث والمحمولة الصغيرة)</option>
-                        </select>
-                    </div>
+                <!-- Quick Database Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2 mb-2">
+                        <span>🛡️</span>
+                        <span>أمان البيانات والنسخ الاحتياطي</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                        بيانات المحل والفواتير وحسابات الزبائن محفوظة محلياً بنسبة 100% داخل قاعدة البيانات المستقلة.
+                    </p>
+                    <a href="/settings/backup-db"
+                       class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 transition">
+                        <span>💾</span>
+                        <span>تنزيل نسخة احتياطية فورية</span>
+                    </a>
                 </div>
+
             </div>
 
-            <!-- Invoice & Repair Terms -->
-            <div>
-                <h3 class="text-sm font-black text-slate-900 border-b border-slate-300 pb-2 mb-4">الشروط وسياسات الضمان</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">شروط أسفل فاتورة المبيعات (سياسة الاستبدال والاسترجاع):</label>
-                        <textarea name="invoice_footer" rows="3" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">{{ settings.invoice_footer }}</textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1">شروط إيصال استلام الصيانة (إخلاء المسؤولية وفترة الضمان):</label>
-                        <textarea name="repair_terms" rows="4" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600">{{ settings.repair_terms }}</textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-4 border-t border-slate-300 flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-black py-2.5 px-6 rounded-xl shadow-lg transition text-sm">
-                    حفظ التغييرات والإعدادات
-                </button>
-            </div>
-
-        </form>
-    </div>
+        </div>
+    </form>
 
 </div>
 {% endblock %}

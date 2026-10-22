@@ -24,7 +24,7 @@ def list_customers(
         "current_user": current_user,
         "active_page": "customers",
         "customers": customers,
-        "currency": settings.currency if settings else "ر.س"
+        "currency": settings.currency if settings else "د.ل"
     })
 
 @router.post("/create")
