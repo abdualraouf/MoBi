@@ -5,7 +5,7 @@ import socket
 import threading
 import urllib.request
 import webbrowser
-from app.config import APP_NAME, APP_TITLE, DATABASE_PATH, VERSION, STATIC_DIR
+from app.config import APP_NAME, APP_TITLE, DATABASE_PATH, VERSION, STATIC_DIR, UPLOADS_DIR
 from app.main import app
 
 BANNER = r"""
@@ -182,7 +182,7 @@ def get_shop_branding() -> tuple[str, str]:
                 if settings.shop_name:
                     shop_name = settings.shop_name
                 if settings.logo_path:
-                    custom_ico = STATIC_DIR / "uploads" / "shop_icon.ico"
+                    custom_ico = UPLOADS_DIR / "shop_icon.ico"
                     if custom_ico.exists():
                         icon_path = str(custom_ico)
     except Exception:

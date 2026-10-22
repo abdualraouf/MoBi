@@ -31,5 +31,8 @@ Thumbs.db
 *.log
 
 # Uploaded user media
+uploads/*
+!uploads/.gitkeep
+test_uploads/
 app/static/uploads/*
 !app/static/uploads/.gitkeep

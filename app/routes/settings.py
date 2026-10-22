@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, File, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from sqlalchemy.orm import Session
-from app.config import TEMPLATES_DIR, STATIC_DIR, DATABASE_PATH
+from app.config import TEMPLATES_DIR, STATIC_DIR, DATABASE_PATH, UPLOADS_DIR
 from app.template_engine import templates
 from app.database import get_db
 from app.models.settings import ShopSettings
@@ -68,7 +68,7 @@ async def update_settings(
     if logo and logo.filename:
         ext = os.path.splitext(logo.filename)[1].lower()
         if ext in ('.png', '.jpg', '.jpeg', '.webp', '.ico'):
-            uploads_dir = STATIC_DIR / "uploads"
+            uploads_dir = UPLOADS_DIR
             uploads_dir.mkdir(parents=True, exist_ok=True)
             
             contents = await logo.read()
@@ -106,7 +106,7 @@ def reset_logo(
         settings.logo_path = None
         db.commit()
 
-        uploads_dir = STATIC_DIR / "uploads"
+        uploads_dir = UPLOADS_DIR
         for fname in ("shop_logo.png", "shop_icon.ico"):
             fpath = uploads_dir / fname
             if fpath.exists():

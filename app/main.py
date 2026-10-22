@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-from app.config import APP_TITLE, VERSION, STATIC_DIR
+from app.config import APP_TITLE, VERSION, STATIC_DIR, UPLOADS_DIR
 from app.database_init import init_db
 from app.routes.auth import router as auth_router, RedirectException, get_current_user
 from app.routes.pos import router as pos_router
@@ -13,6 +13,12 @@ from app.routes.settings import router as settings_router
 from app.database import SessionLocal
 
 app = FastAPI(title=APP_TITLE, version=VERSION)
+
+# Automatically ensure persistent uploads directory exists
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+# Mount persistent uploads to /static/uploads first (takes priority over bundled static)
+app.mount("/static/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 # Automatically mount static assets locally (Offline-First 100%)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -39,7 +45,7 @@ def redirect_exception_handler(request: Request, exc: RedirectException):
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
     """Serve the shop brand icon or fallback to official MoBi brand icon."""
-    custom_icon = STATIC_DIR / "uploads" / "shop_icon.ico"
+    custom_icon = UPLOADS_DIR / "shop_icon.ico"
     if custom_icon.exists():
         return FileResponse(custom_icon)
     return FileResponse(STATIC_DIR / "favicon.ico")

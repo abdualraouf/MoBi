@@ -17,8 +17,16 @@ APP_DIR = BUNDLE_DIR / "app"
 STATIC_DIR = APP_DIR / "static"
 TEMPLATES_DIR = APP_DIR / "templates"
 
-# Database Configuration
-DATABASE_PATH = DATA_DIR / "mobi.db"
+# Persistent Storage & Test Environment Isolation
+IS_TESTING = os.getenv("MOBI_TESTING") == "1"
+
+if IS_TESTING:
+    DATABASE_PATH = DATA_DIR / "test_mobi.db"
+    UPLOADS_DIR = DATA_DIR / "test_uploads"
+else:
+    DATABASE_PATH = DATA_DIR / "mobi.db"
+    UPLOADS_DIR = DATA_DIR / "uploads"
+
 DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 # Security & Sessions

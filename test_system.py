@@ -1,23 +1,43 @@
+import os
 import sys
+import shutil
+
+# 1. Force test environment BEFORE importing any application module
+os.environ["MOBI_TESTING"] = "1"
+
 from fastapi.testclient import TestClient
+from app.config import SESSION_COOKIE_NAME, DATABASE_PATH, UPLOADS_DIR, STATIC_DIR, IS_TESTING
 from app.main import app
 from app.database_init import init_db
-from app.config import SESSION_COOKIE_NAME
 
 def run_tests():
     print("=" * 60)
-    print("   MoBi Automated Verification Test Suite")
+    print("   MoBi Automated Verification Test Suite (Isolated Environment)")
     print("=" * 60)
 
-    # 1. Initialize DB
-    print("[1/8] Testing Database Initialization...")
+    # Safety Guardrail: Never allow tests to run against production database!
+    assert IS_TESTING is True, "Security Error: IS_TESTING is not enabled!"
+    assert DATABASE_PATH.name == "test_mobi.db", f"Security Error: Tests must use test_mobi.db, got {DATABASE_PATH.name}!"
+    assert UPLOADS_DIR.name == "test_uploads", f"Security Error: Tests must use test_uploads, got {UPLOADS_DIR.name}!"
+
+    # Clean up any leftover test database from previous aborted runs
+    from app.database import engine
+    engine.dispose()
+    if DATABASE_PATH.exists():
+        DATABASE_PATH.unlink()
+    if UPLOADS_DIR.exists():
+        shutil.rmtree(UPLOADS_DIR)
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # 1. Initialize Isolated Test DB
+    print("[1/10] Testing Database Initialization (test_mobi.db)...")
     init_db()
     print("  -> Passed.")
 
     client = TestClient(app)
 
     # 2. Test Login page
-    print("[2/8] Testing GET /auth/login...")
+    print("[2/10] Testing GET /auth/login...")
     res = client.get("/auth/login")
     assert res.status_code == 200, f"Expected 200, got {res.status_code}"
     assert "MoBi" in res.text
@@ -136,7 +156,7 @@ def run_tests():
     assert upload_res.status_code == 200
 
     # Verify generated files
-    uploads_dir = STATIC_DIR / "uploads"
+    uploads_dir = UPLOADS_DIR
     png_file = uploads_dir / "shop_logo.png"
     ico_file = uploads_dir / "shop_icon.ico"
     assert png_file.exists(), "shop_logo.png was not generated!"
@@ -167,6 +187,22 @@ def run_tests():
     assert title_after_reset == "المركز الذهبي للهواتف"
     assert icon_after_reset == str(STATIC_DIR / "favicon.ico")
     print("  -> Passed. Custom logo uploaded, converted to Windows ICO, and reset cleanly.")
+
+    # 11. Cleanup Test Artifacts
+    print("\nCleaning up isolated test environment...")
+    from app.database import engine
+    engine.dispose()
+    if DATABASE_PATH.exists():
+        try:
+            DATABASE_PATH.unlink()
+        except Exception as e:
+            print(f"Warning: could not delete {DATABASE_PATH}: {e}")
+    if UPLOADS_DIR.exists():
+        try:
+            shutil.rmtree(UPLOADS_DIR)
+        except Exception as e:
+            print(f"Warning: could not delete {UPLOADS_DIR}: {e}")
+    print("  -> Cleanup complete. Production database remained 100% untouched.")
 
     print("\n" + "=" * 60)
     print("  [SUCCESS] ALL 10 TESTS PASSED! SYSTEM IS 100% OPERATIONAL.")
