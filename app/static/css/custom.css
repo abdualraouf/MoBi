@@ -1,6 +1,6 @@
 /* MoBi Custom Styling & Thermal Printing Rules */
 
-@import url('/static/fonts/cairo.css');
+@import url('/static/fonts/ibm-plex-arabic.css');
 @import url('/static/css/mobi-tokens.css');
 
 :root {
@@ -13,15 +13,93 @@
 }
 
 body {
-    font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif;
+    font-family: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     direction: rtl;
     text-align: right;
     background-color: #f1f5f9;
     color: #0f172a;
     margin: 0;
     padding: 0;
+    line-height: 1.6;
+    letter-spacing: 0;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* UI Scale Engine (Dynamic Scaling for Touch & High-DPI screens) */
+html {
+    font-size: 16px;
+    transition: font-size 0.18s ease-in-out;
+}
+
+html.ui-scale-compact {
+    font-size: 14.5px;
+}
+
+html.ui-scale-large {
+    font-size: 18px;
+}
+
+html.ui-scale-xlarge {
+    font-size: 20px;
+}
+
+/* Typography Weight Smoothing for Supreme Arabic & Latin Legibility */
+.font-black, .font-extrabold {
+    font-weight: 700 !important;
+}
+
+/* Typography Floor Boost - Prevent Microscopic Text */
+.text-xs {
+    font-size: 0.84rem !important;
+    line-height: 1.25rem !important;
+}
+
+.text-sm {
+    font-size: 0.94rem !important;
+    line-height: 1.35rem !important;
+}
+
+.text-\[11px\] {
+    font-size: 0.8125rem !important;
+}
+
+/* Touch Ergonomics & Accessible Touch Targets */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.touch-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.touch-qty-btn {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    min-width: 2.5rem !important;
+    min-height: 2.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    user-select: none !important;
+    cursor: pointer !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.15s ease !important;
+}
+
+.touch-qty-btn:active {
+    transform: scale(0.92);
+}
+
+input, select, textarea, button {
+    font-family: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 
 /* High Contrast Form & Input Controls */

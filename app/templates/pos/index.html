@@ -27,7 +27,7 @@
                     id="btn-clear-cart"
                     hx-post="/pos/clear-cart"
                     hx-target="#pos-cart-container"
-                    class="bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-800 text-sm font-bold px-4 py-2.5 rounded-lg border border-slate-300 hover:border-red-300 transition flex items-center space-x-1.5 space-x-reverse shadow-sm">
+                    class="bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-900 text-sm font-black px-4 py-3 rounded-xl border border-slate-300 hover:border-red-300 transition flex items-center space-x-2 space-x-reverse shadow-sm min-h-[46px] touch-target active:scale-95">
                 <span>🗑️</span>
                 <span>تفريغ السلة [F9]</span>
             </button>
@@ -59,16 +59,16 @@
                 
                 <!-- Customer Selection -->
                 <div>
-                    <label class="block text-xs font-black text-slate-900 mb-1">العميل:</label>
+                    <label class="block text-xs font-black text-slate-900 mb-1.5">العميل:</label>
                     <div class="flex items-center space-x-2 space-x-reverse">
-                        <select id="checkout-customer" class="flex-1 bg-white border-2 border-slate-300 text-slate-900 rounded-lg p-2.5 text-sm font-bold focus:border-blue-600 outline-none">
+                        <select id="checkout-customer" class="flex-1 bg-white border-2 border-slate-300 text-slate-900 rounded-xl p-3 text-base font-bold focus:border-blue-600 outline-none min-h-[46px]">
                             {% for cust in customers %}
                             <option value="{{ cust.id }}" {% if cust.phone == '0000000000' %}selected{% endif %}>
                                 {{ cust.name }} ({{ cust.phone }})
                             </option>
                             {% endfor %}
                         </select>
-                        <button type="button" @click="showAddCustomer = true" class="bg-blue-600 hover:bg-blue-700 text-white font-black p-2.5 rounded-lg border border-blue-700 text-sm shadow" title="إضافة عميل جديد">
+                        <button type="button" @click="showAddCustomer = true" class="w-12 h-12 min-w-[46px] min-h-[46px] bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl border border-blue-700 text-lg shadow flex items-center justify-center active:scale-95 touch-target" title="إضافة عميل جديد">
                             +
                         </button>
                     </div>
@@ -83,11 +83,11 @@
                 </div>
 
                 <!-- Discount Field -->
-                <div class="flex items-center justify-between bg-slate-100 p-2.5 rounded-lg border border-slate-300">
+                <div class="flex items-center justify-between bg-slate-100 p-3 rounded-xl border border-slate-300">
                     <span class="text-xs font-black text-slate-900">خصم إضافي:</span>
                     <div class="flex items-center space-x-1.5 space-x-reverse">
                         <input type="number" step="0.5" min="0" x-model.number="discount" @input="recalc()"
-                               class="w-24 text-center font-black py-1 px-2 border-2 border-slate-400 rounded text-sm outline-none focus:border-blue-600 text-slate-900 bg-white">
+                               class="w-28 text-center font-black py-2 px-3 border-2 border-slate-400 rounded-lg text-base outline-none focus:border-blue-600 text-slate-900 bg-white">
                         <span class="text-xs text-slate-800 font-black">{{ currency }}</span>
                     </div>
                 </div>
@@ -98,22 +98,22 @@
                     <div class="grid grid-cols-4 gap-2">
                         <button type="button" @click="paymentMethod = 'cash'"
                                 :class="paymentMethod === 'cash' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-2.5 text-xs rounded-lg transition border text-center">
+                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                             💵 كاش
                         </button>
                         <button type="button" @click="paymentMethod = 'card'"
                                 :class="paymentMethod === 'card' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-2.5 text-xs rounded-lg transition border text-center">
+                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                             💳 شبكة
                         </button>
                         <button type="button" @click="paymentMethod = 'transfer'"
                                 :class="paymentMethod === 'transfer' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-2.5 text-xs rounded-lg transition border text-center">
+                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                             🏦 تحويل
                         </button>
                         <button type="button" @click="paymentMethod = 'debt'"
                                 :class="paymentMethod === 'debt' ? 'bg-amber-600 text-white font-black shadow-md border-amber-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-2.5 text-xs rounded-lg transition border text-center">
+                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                             📝 آجل
                         </button>
                     </div>
@@ -123,24 +123,24 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-black text-slate-900">المبلغ المدفوع:</label>
-                        <button type="button" @click="paidAmount = netTotal" class="text-xs text-blue-700 hover:text-blue-900 hover:underline font-black">
+                        <button type="button" @click="paidAmount = netTotal" class="text-xs text-blue-700 hover:text-blue-900 hover:underline font-black py-1 px-2 rounded touch-target">
                             سداد كامل المبلغ
                         </button>
                     </div>
                     <input type="number" step="0.5" x-model.number="paidAmount" @input="recalc()"
-                           class="w-full text-center text-2xl font-black py-2.5 border-2 border-slate-400 rounded-lg outline-none focus:border-blue-600 text-slate-950 bg-white">
+                           class="w-full text-center text-2xl font-black py-2.5 border-2 border-slate-400 rounded-xl outline-none focus:border-blue-600 text-slate-950 bg-white">
                     
                     <!-- Quick Cash Buttons -->
-                    <div class="grid grid-cols-4 gap-1.5 mt-2">
-                        <button type="button" @click="paidAmount = 50" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">50</button>
-                        <button type="button" @click="paidAmount = 100" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">100</button>
-                        <button type="button" @click="paidAmount = 200" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">200</button>
-                        <button type="button" @click="paidAmount = 500" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-900 py-1.5 rounded font-black border border-slate-300">500</button>
+                    <div class="grid grid-cols-4 gap-2 mt-2.5">
+                        <button type="button" @click="paidAmount = 50" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">50</button>
+                        <button type="button" @click="paidAmount = 100" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">100</button>
+                        <button type="button" @click="paidAmount = 200" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">200</button>
+                        <button type="button" @click="paidAmount = 500" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">500</button>
                     </div>
                 </div>
 
                 <!-- Change Due / Remaining -->
-                <div class="flex justify-between items-center bg-slate-100 p-3 rounded-lg border-2 border-slate-300">
+                <div class="flex justify-between items-center bg-slate-100 p-3 rounded-xl border-2 border-slate-300">
                     <span class="text-sm font-black text-slate-900" x-text="changeDue >= 0 ? 'المتبقي للزبون (الباقي):' : 'المتبقي على الزبون (ذمة):'"></span>
                     <span class="text-xl font-black" :class="changeDue >= 0 ? 'text-emerald-700' : 'text-red-700'"
                           x-text="Math.abs(changeDue).toFixed(2) + ' ' + '{{ currency }}'">
@@ -151,8 +151,8 @@
                 <button type="button"
                         id="btn-complete-sale"
                         @click="doCheckout()"
-                        class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-3.5 px-4 rounded-xl shadow-lg hover:shadow-xl transition text-base flex items-center justify-center space-x-2 space-x-reverse border border-emerald-900">
-                    <span>🖨️</span>
+                        class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-4 px-4 rounded-xl shadow-lg hover:shadow-xl transition text-base flex items-center justify-center space-x-2 space-x-reverse border border-emerald-900 min-h-[52px] active:scale-98 touch-target">
+                    <span class="text-xl">🖨️</span>
                     <span>إتمام البيع وطباعة الفاتورة [F4]</span>
                 </button>
 
@@ -174,18 +174,18 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-3">
             {% for prod in quick_products %}
             <div onclick="handleScannedBarcode('{{ prod.barcode or prod.id }}')"
-                 class="bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 p-3 rounded-xl cursor-pointer transition text-center shadow-sm hover:shadow group">
-                <div class="text-2xl mb-1">
+                 class="bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 p-3.5 rounded-xl cursor-pointer transition text-center shadow-sm hover:shadow group min-h-[120px] flex flex-col justify-between active:scale-95 touch-target">
+                <div class="text-3xl mb-1">
                     {% if prod.has_imei %}📱{% elif 'شاحن' in prod.name or 'كيبل' in prod.name %}🔌{% elif 'شاشة' in prod.name %}🛠️{% else %}📦{% endif %}
                 </div>
-                <div class="text-xs font-bold text-slate-900 line-clamp-2 group-hover:text-blue-700">
+                <div class="text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-blue-700 leading-tight">
                     {{ prod.name }}
                 </div>
                 <div class="mt-1 font-black text-sm text-blue-700">
                     {{ "%.2f"|format(prod.sell_price) }} {{ currency }}
                 </div>
                 {% if prod.has_imei %}
-                <span class="inline-block text-[11px] bg-amber-100 text-amber-950 px-2 py-0.5 rounded mt-1 font-bold border border-amber-400">
+                <span class="inline-block text-xs bg-amber-100 text-amber-950 px-2 py-0.5 rounded-md mt-1 font-bold border border-amber-400">
                     يتطلب IMEI
                 </span>
                 {% else %}

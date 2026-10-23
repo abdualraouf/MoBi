@@ -34,22 +34,24 @@
                     </td>
                     <td class="py-3.5 px-3 text-center">
                         {% if item.has_imei %}
-                        <span class="inline-block bg-slate-200 text-slate-900 font-black px-2.5 py-1 rounded text-xs border border-slate-300">1</span>
+                        <span class="inline-flex items-center justify-center min-w-[38px] h-9 bg-slate-200 text-slate-900 font-black px-3 rounded-lg text-sm border border-slate-300">1</span>
                         {% else %}
-                        <div class="inline-flex items-center space-x-1 space-x-reverse border-2 border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                        <div class="inline-flex items-center border-2 border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm">
                             <button type="button"
                                     hx-post="/pos/update-qty"
                                     hx-vals='{"cart_id": "{{ item.cart_id }}", "delta": -1}'
                                     hx-target="#pos-cart-container"
-                                    class="px-2.5 py-1 bg-slate-100 hover:bg-red-100 hover:text-red-700 text-slate-800 font-black transition text-sm">
+                                    title="إنقاص الكمية"
+                                    class="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center bg-slate-100 hover:bg-red-100 hover:text-red-700 text-slate-900 font-black transition text-lg active:scale-95 touch-target">
                                 -
                             </button>
-                            <span class="px-3 font-black text-sm text-slate-900">{{ item.quantity }}</span>
+                            <span class="min-w-[42px] px-2 text-center font-black text-base text-slate-950">{{ item.quantity }}</span>
                             <button type="button"
                                     hx-post="/pos/update-qty"
                                     hx-vals='{"cart_id": "{{ item.cart_id }}", "delta": 1}'
                                     hx-target="#pos-cart-container"
-                                    class="px-2.5 py-1 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-700 text-slate-800 font-black transition text-sm">
+                                    title="زيادة الكمية"
+                                    class="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center bg-slate-100 hover:bg-emerald-100 hover:text-emerald-700 text-slate-900 font-black transition text-lg active:scale-95 touch-target">
                                 +
                             </button>
                         </div>
@@ -64,7 +66,7 @@
                                 hx-vals='{"cart_id": "{{ item.cart_id }}"}'
                                 hx-target="#pos-cart-container"
                                 title="حذف الصنف"
-                                class="text-red-600 hover:text-red-800 hover:bg-red-100 font-black text-base transition p-1.5 rounded-lg border border-transparent hover:border-red-300">
+                                class="w-10 h-10 min-w-[40px] min-h-[40px] text-red-600 hover:text-white hover:bg-red-600 font-black text-lg transition rounded-xl border border-red-200 hover:border-red-600 inline-flex items-center justify-center active:scale-95 shadow-sm touch-target">
                             ✕
                         </button>
                     </td>

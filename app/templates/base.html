@@ -19,7 +19,7 @@
     <script src="/static/js/jsbarcode.all.min.js"></script>
     <script src="/static/js/pos_scanner.js"></script>
 
-    <!-- Immediate Theme Restoration (Prevents FOUC) -->
+    <!-- Immediate Theme & UI Scale Restoration (Prevents FOUC) -->
     <script>
         (function() {
             var theme = localStorage.getItem('mobi_theme');
@@ -27,6 +27,10 @@
                 document.documentElement.classList.add('dark');
             } else {
                 document.documentElement.classList.remove('dark');
+            }
+            var scale = localStorage.getItem('mobi_ui_scale');
+            if (scale && scale !== 'default') {
+                document.documentElement.classList.add('ui-scale-' + scale);
             }
         })();
     </script>
@@ -106,13 +110,33 @@
                 <!-- User profile, Theme Toggle & Logout -->
                 <div class="flex items-center space-x-3 space-x-reverse">
                     
+                    <!-- UI Scale Control (A- / Level / A+) - Separated touch-friendly buttons with distinct borders -->
+                    <div class="inline-flex items-center gap-2" dir="ltr" title="تحجيم وتكبير الواجهة للشاشات اللمسية">
+                        <button type="button"
+                                onclick="changeUiScale(-1)"
+                                class="h-11 min-w-[46px] px-3 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white font-black text-sm rounded-xl border-2 border-slate-500 hover:border-amber-400 shadow-sm transition-all flex items-center justify-center select-none active:scale-95 touch-target"
+                                title="تصغير الخط والواجهة (A-)">
+                            <span class="tracking-wider">A-</span>
+                        </button>
+                        <span id="ui-scale-indicator"
+                              class="h-11 min-w-[58px] px-2.5 bg-slate-900/90 border-2 border-slate-600 rounded-xl font-mono font-black text-amber-300 text-sm select-none flex items-center justify-center shadow-inner">
+                            100%
+                        </span>
+                        <button type="button"
+                                onclick="changeUiScale(1)"
+                                class="h-11 min-w-[46px] px-3 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white font-black text-sm rounded-xl border-2 border-slate-500 hover:border-amber-400 shadow-sm transition-all flex items-center justify-center select-none active:scale-95 touch-target"
+                                title="تكبير الخط والواجهة (A+)">
+                            <span class="tracking-wider">A+</span>
+                        </button>
+                    </div>
+
                     <!-- Theme Toggle Button (Light / Dark) -->
                     <button type="button"
                             id="theme-toggle-btn"
                             onclick="toggleTheme()"
-                            class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-700 transition flex items-center justify-center text-sm shadow-sm"
+                            class="h-11 w-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border-2 border-slate-500 hover:border-amber-400 shadow-sm transition-all flex items-center justify-center text-lg active:scale-95 touch-target"
                             title="تبديل الوضع (داكن / ساطع)">
-                        <span id="theme-toggle-icon" class="text-base select-none leading-none">🌙</span>
+                        <span id="theme-toggle-icon" class="text-lg select-none leading-none">🌙</span>
                     </button>
 
                     {% if current_user %}
@@ -171,7 +195,7 @@
         <p>{{ shop.shop_name if shop else 'MoBi' }} &bull; نظام تشغيلي محلي مستقل &bull; النسخة 1.0.0</p>
     </footer>
 
-    <!-- Global Theme Management Script -->
+    <!-- Global Theme & UI Scale Management Script -->
     <script>
         function updateThemeIcon() {
             var icon = document.getElementById('theme-toggle-icon');
@@ -191,11 +215,55 @@
             window.dispatchEvent(new CustomEvent('mobi-theme-changed', { detail: { isDark: isDark } }));
         }
 
-        // Initialize icon as soon as DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', updateThemeIcon);
-        } else {
+        // Dynamic UI Scale Engine (compact 90%, default 100%, large 115%, xlarge 130%)
+        var UI_SCALES = ['compact', 'default', 'large', 'xlarge'];
+        var UI_SCALE_LABELS = {
+            'compact': '90%',
+            'default': '100%',
+            'large': '115%',
+            'xlarge': '130%'
+        };
+
+        function getCurrentScale() {
+            return localStorage.getItem('mobi_ui_scale') || 'default';
+        }
+
+        function updateScaleUI() {
+            var current = getCurrentScale();
+            UI_SCALES.forEach(function(s) {
+                if (s !== 'default') {
+                    document.documentElement.classList.remove('ui-scale-' + s);
+                }
+            });
+            if (current !== 'default') {
+                document.documentElement.classList.add('ui-scale-' + current);
+            }
+            var indicator = document.getElementById('ui-scale-indicator');
+            if (indicator) {
+                indicator.textContent = UI_SCALE_LABELS[current] || '100%';
+            }
+        }
+
+        function changeUiScale(direction) {
+            var current = getCurrentScale();
+            var idx = UI_SCALES.indexOf(current);
+            if (idx === -1) idx = 1;
+            var nextIdx = Math.max(0, Math.min(UI_SCALES.length - 1, idx + direction));
+            var nextScale = UI_SCALES[nextIdx];
+            localStorage.setItem('mobi_ui_scale', nextScale);
+            updateScaleUI();
+        }
+
+        // Initialize UI states as soon as DOM is ready
+        function initAppChrome() {
             updateThemeIcon();
+            updateScaleUI();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAppChrome);
+        } else {
+            initAppChrome();
         }
     </script>
 
