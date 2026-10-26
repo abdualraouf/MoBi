@@ -101,20 +101,7 @@ def apply_native_icons(icon_path: str, shop_name: str = ""):
                         user32.SetClassLongW(hwnd, GCLP_HICON, hicon_big)
                         user32.SetClassLongW(hwnd, GCLP_HICONSM, hicon_small)
 
-                    # Ensure window stays full-screen/maximized and disable the restore/maximize button (keep minimize & close)
-                    try:
-                        GWL_STYLE = -16
-                        WS_MAXIMIZEBOX = 0x00010000
-                        WS_MINIMIZEBOX = 0x00020000
-                        style = user32.GetWindowLongW(hwnd, GWL_STYLE)
-                        new_style = (style | WS_MINIMIZEBOX) & ~WS_MAXIMIZEBOX
-                        user32.SetWindowLongW(hwnd, GWL_STYLE, new_style)
-                        user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE = 3
-                        # Force frame repaint
-                        SWP_FLAGS = 0x0001 | 0x0002 | 0x0004 | 0x0020  # NOSIZE | NOMOVE | NOZORDER | FRAMECHANGED
-                        user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FLAGS)
-                    except Exception:
-                        pass
+                    pass
 
                 if found:
                     break
@@ -136,6 +123,34 @@ def minimize_console(icon_path: str = None):
                 ctypes.windll.user32.ShowWindow(hwnd, 7)
     except Exception:
         pass
+
+def get_screen_working_area() -> tuple[int, int, int, int]:
+    """Retrieve primary monitor working area (X, Y, Width, Height) in logical pixels, excluding taskbar."""
+    try:
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+            user32 = ctypes.windll.user32
+            rect = wintypes.RECT()
+            # SPI_GETWORKAREA = 0x0030
+            if user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(rect), 0):
+                try:
+                    dpi = user32.GetDpiForSystem()
+                except AttributeError:
+                    dpi = 96
+                scale = max(dpi / 96.0, 1.0)
+
+                phys_w = rect.right - rect.left
+                phys_h = rect.bottom - rect.top
+                if phys_w > 0 and phys_h > 0:
+                    logical_x = int(rect.left / scale)
+                    logical_y = int(rect.top / scale)
+                    logical_w = int(phys_w / scale)
+                    logical_h = int(phys_h / scale)
+                    return logical_x, logical_y, logical_w, logical_h
+    except Exception as e:
+        print(f"[*] Display detection fallback: {e}")
+    return 0, 0, 1280, 800
 
 def get_free_port() -> int:
     """Find an available ephemeral port to prevent port conflicts (WinError 10048)."""
@@ -234,25 +249,45 @@ def main():
             print(f"[*] Window Title   : {shop_name}")
             print(f"[*] Window Icon    : {icon_path}")
 
+            win_x, win_y, win_w, win_h = get_screen_working_area()
+            print(f"[*] Display Bounds : X={win_x}, Y={win_y}, Width={win_w}, Height={win_h}")
+
             window = webview.create_window(
                 title=shop_name,
                 url=url,
-                width=1280,
-                height=820,
-                min_size=(1024, 700),
-                confirm_close=True,
-                text_select=True,
-                maximized=True,
-                resizable=False,
+                x=win_x,
+                y=win_y,
+                width=win_w,
+                height=win_h,
+                confirm_close=False,
+                text_select=False,
+                frameless=True,
+                easy_drag=False,
             )
 
-            # Apply native taskbar icons when window is shown
-            window.events.shown += lambda: apply_native_icons(icon_path, shop_name)
+            # Bridge window reference to FastAPI app state for in-app controls
+            app.state.window = window
+
+            def on_shown():
+                apply_native_icons(icon_path, shop_name)
+                try:
+                    native_form = getattr(window, "native", None)
+                    if native_form:
+                        import System
+                        import System.Drawing as Drawing
+                        def adjust_bounds():
+                            native_form.Location = Drawing.Point(win_x, win_y)
+                            native_form.ClientSize = Drawing.Size(win_w, win_h)
+                        native_form.Invoke(System.Action(adjust_bounds))
+                except Exception as e:
+                    print(f"[*] Bounds alignment notice: {e}")
+
+            window.events.shown += on_shown
             apply_native_icons(icon_path, shop_name)
 
             webview.start(icon=icon_path, debug=False)
             print("\n[OK] MoBi window closed. Application terminated cleanly.")
-            sys.exit(0)
+            os._exit(0)
         except Exception as e:
             print(f"[!] Could not launch WebView2 desktop window: {e}")
             print("[*] Falling back to default web browser...")

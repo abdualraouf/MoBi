@@ -3,7 +3,7 @@
 {% block title %}نقطة البيع السريعة (POS) | MoBi{% endblock %}
 
 {% block content %}
-<div class="space-y-4" x-data="posApp()">
+<div class="space-y-4 pb-40" x-data="posApp()">
     
     <!-- Top Barcode Search & Action Bar -->
     <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-300 flex flex-col md:flex-row items-center justify-between gap-3">
@@ -35,25 +35,11 @@
 
     </div>
 
-    <!-- Main POS Grid -->
+    <!-- Main POS Grid: Checkout Panel on Right (for right-handed touch entry), Cart on Left in RTL -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
-        <!-- Left / Cart Table Column (8 Cols on XL) -->
-        <div class="lg:col-span-7 xl:col-span-8 bg-white rounded-xl shadow-sm border border-slate-300 flex flex-col overflow-hidden min-h-[62vh]">
-            <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center border-b border-slate-950">
-                <div class="flex items-center space-x-2 space-x-reverse">
-                    <span class="text-lg">🛒</span>
-                    <h2 class="font-black text-base">سلة الفاتورة الحالية</h2>
-                </div>
-                <span class="text-xs text-amber-300 font-mono font-bold bg-slate-800 px-2 py-0.5 rounded border border-slate-700">اختصار الدفع: [F4]</span>
-            </div>
-
-            <!-- Dynamic Cart Content Target -->
-            {% include "pos/cart_partial.html" %}
-        </div>
-
-        <!-- Right / Checkout & Payment Panel (4 Cols on XL) -->
-        <div class="lg:col-span-5 xl:col-span-4 flex flex-col space-y-4">
+        <!-- Right Column / Checkout & Payment Panel (lg:col-span-5 xl:col-span-4) -->
+        <div class="order-2 lg:order-1 lg:col-span-5 xl:col-span-4 flex flex-col space-y-4">
             
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-4">
                 
@@ -160,36 +146,78 @@
 
         </div>
 
-    </div>
+        <!-- Left Column / Cart Table Column (lg:col-span-7 xl:col-span-8) -->
+        <div class="order-1 lg:order-2 lg:col-span-7 xl:col-span-8 bg-white rounded-xl shadow-sm border border-slate-300 flex flex-col overflow-hidden min-h-[62vh]">
+            <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center border-b border-slate-950">
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <span class="text-lg">🛒</span>
+                    <h2 class="font-black text-base">سلة الفاتورة الحالية</h2>
+                </div>
+                <span class="text-xs text-amber-300 font-mono font-bold bg-slate-800 px-2 py-0.5 rounded border border-slate-700">اختصار الدفع: [F4]</span>
+            </div>
 
-    <!-- Quick Products Catalog Bar below -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-300 space-y-3">
-        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-            <h3 class="font-black text-sm text-slate-900 flex items-center space-x-2 space-x-reverse">
-                <span>⚡</span>
-                <span>الأصناف السريعة والمخزون المتوفر (انقر للإضافة الفورية)</span>
-            </h3>
+            <!-- Dynamic Cart Content Target -->
+            {% include "pos/cart_partial.html" %}
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-3">
+    </div>
+
+    <!-- Fixed Bottom Quick Products Shelf (Docked at bottom of viewport) -->
+    <div class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t-2 border-slate-300 shadow-[0_-8px_25px_rgba(0,0,0,0.12)] transition-all duration-300 no-print">
+        <!-- Control Header Bar -->
+        <div class="flex items-center justify-between px-4 py-1.5 bg-slate-100 border-b border-slate-200">
+            <div class="flex items-center space-x-2 space-x-reverse text-xs font-black text-slate-900">
+                <span class="text-base leading-none">⚡</span>
+                <span>الأصناف السريعة والمخزون المتوفر</span>
+                <span class="bg-blue-100 text-blue-900 px-2.5 py-0.5 rounded-full text-xs font-bold border border-blue-200">
+                    {{ quick_products|length }} صنف
+                </span>
+            </div>
+            
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <!-- Scroll arrows for quick browsing -->
+                <div x-show="showQuickBar" class="hidden sm:flex items-center space-x-1 space-x-reverse">
+                    <button type="button" @click="scrollQuickBar(1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليمين">▶</button>
+                    <button type="button" @click="scrollQuickBar(-1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليسار">◀</button>
+                </div>
+                
+                <!-- Collapse / Expand toggle button -->
+                <button type="button"
+                        @click="showQuickBar = !showQuickBar"
+                        class="text-xs font-black text-slate-800 hover:text-blue-700 px-3 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 shadow-sm transition flex items-center space-x-1 space-x-reverse active:scale-95 touch-target">
+                    <span x-text="showQuickBar ? 'طي الشريط ▼' : 'إظهار الأصناف السريعة ▲'"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Horizontal Touch-Scrollable Strip -->
+        <div x-show="showQuickBar"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-2"
+             id="quick-products-strip"
+             class="overflow-x-auto flex items-center gap-3 py-2.5 px-4 scrollbar-thin select-none touch-pan-x scroll-smooth">
             {% for prod in quick_products %}
             <div onclick="handleScannedBarcode('{{ prod.barcode or prod.id }}')"
-                 class="bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 p-3.5 rounded-xl cursor-pointer transition text-center shadow-sm hover:shadow group min-h-[120px] flex flex-col justify-between active:scale-95 touch-target">
-                <div class="text-3xl mb-1">
+                 class="min-w-[145px] max-w-[160px] h-[112px] flex-shrink-0 bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 p-2.5 rounded-xl cursor-pointer transition text-center shadow-sm hover:shadow group flex flex-col justify-between active:scale-95 touch-target">
+                <div class="text-2xl mb-0.5">
                     {% if prod.has_imei %}📱{% elif 'شاحن' in prod.name or 'كيبل' in prod.name %}🔌{% elif 'شاشة' in prod.name %}🛠️{% else %}📦{% endif %}
                 </div>
-                <div class="text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-blue-700 leading-tight">
+                <div class="text-xs font-bold text-slate-900 line-clamp-2 group-hover:text-blue-700 leading-tight">
                     {{ prod.name }}
                 </div>
-                <div class="mt-1 font-black text-sm text-blue-700">
+                <div class="mt-0.5 font-black text-sm text-blue-700">
                     {{ "%.2f"|format(prod.sell_price) }} {{ currency }}
                 </div>
                 {% if prod.has_imei %}
-                <span class="inline-block text-xs bg-amber-100 text-amber-950 px-2 py-0.5 rounded-md mt-1 font-bold border border-amber-400">
+                <span class="inline-block text-[11px] bg-amber-100 text-amber-950 px-2 py-0.5 rounded font-bold border border-amber-400">
                     يتطلب IMEI
                 </span>
                 {% else %}
-                <span class="text-xs text-slate-700 font-bold block mt-1">
+                <span class="text-[11px] text-slate-700 font-bold block">
                     متوفر: {{ prod.quantity }}
                 </span>
                 {% endif %}
@@ -231,6 +259,15 @@ function posApp() {
         paidAmount: 0,
         paymentMethod: 'cash',
         showAddCustomer: false,
+        showQuickBar: true,
+
+        scrollQuickBar(direction) {
+            const el = document.getElementById("quick-products-strip");
+            if (el) {
+                // Smooth scroll horizontally by 240px
+                el.scrollBy({ left: direction * 240, behavior: "smooth" });
+            }
+        },
 
         get rawSubtotal() {
             const el = document.getElementById("sync-subtotal");

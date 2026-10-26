@@ -61,3 +61,32 @@ def root_index(request: Request):
         return RedirectResponse(url="/auth/login", status_code=303)
     finally:
         db.close()
+
+@app.post("/system/window/minimize")
+def window_minimize(request: Request):
+    """Minimize desktop window to taskbar."""
+    w = getattr(request.app.state, "window", None)
+    if w:
+        try:
+            w.minimize()
+        except Exception:
+            pass
+    return {"success": True}
+
+@app.post("/system/window/close")
+def window_close(request: Request):
+    """Close desktop window cleanly and exit process with code 0."""
+    w = getattr(request.app.state, "window", None)
+    import threading, time, os
+    def shutdown():
+        time.sleep(0.15)
+        if w:
+            try:
+                w.destroy()
+            except Exception:
+                pass
+        time.sleep(0.2)
+        os._exit(0)
+    threading.Thread(target=shutdown, daemon=True).start()
+    return {"success": True}
+

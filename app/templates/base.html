@@ -35,15 +35,36 @@
         })();
     </script>
 </head>
-<body class="bg-slate-100 text-slate-900 antialiased min-h-screen flex flex-col font-sans" x-data="{ sidebarOpen: false }">
+<body class="bg-slate-100 text-slate-900 antialiased min-h-screen flex flex-col font-sans" x-data="{ sidebarOpen: false, showExitModal: false }" @keydown.escape.window="showExitModal = false">
 
     <!-- Header Navbar -->
     <header class="main-navbar bg-slate-900 text-white shadow-md z-30 no-print border-b border-slate-800">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 
-                <!-- Logo & Shop Brand (Static non-clickable branding) -->
+                <!-- Right Side: Native Window Controls (Close & Minimize) + Divider + Logo & Shop Brand -->
                 <div class="flex items-center space-x-3 space-x-reverse">
+                    
+                    <!-- Native Kiosk Window Controls (✕ and _) at far right corner (Windows Arabic RTL Standard) -->
+                    <div class="flex items-center gap-1.5" title="التحكم بالنافذة">
+                        <button type="button"
+                                @click="showExitModal = true"
+                                class="h-11 w-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white border-2 border-slate-500 hover:border-red-400 shadow-sm transition-all flex items-center justify-center active:scale-95 touch-target"
+                                title="إغلاق نظام MoBi (✕)">
+                            <span class="text-base font-black select-none leading-none">✕</span>
+                        </button>
+                        <button type="button"
+                                onclick="minimizeMoBiWindow()"
+                                class="h-11 w-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-2 border-slate-500 hover:border-slate-300 shadow-sm transition-all flex items-center justify-center active:scale-95 touch-target"
+                                title="تنزيل النظام لشريط المهام (_)">
+                            <span class="text-xl font-bold font-mono select-none leading-none -mt-1">_</span>
+                        </button>
+                    </div>
+
+                    <!-- Vertical Divider -->
+                    <div class="h-8 w-px bg-slate-700/80"></div>
+
+                    <!-- Logo & Shop Brand (Static non-clickable branding) -->
                     <div class="flex items-center space-x-2 space-x-reverse text-xl font-black tracking-tight text-white select-none cursor-default">
                         <img src="{{ shop.logo_path if shop and shop.logo_path else '/static/img/logo.png' }}" alt="{{ shop.shop_name if shop else 'MoBi' }}" class="w-8 h-8 rounded-lg shadow-sm object-contain bg-white/10 p-0.5">
                         <span>{{ shop.shop_name if shop else 'MoBi' }}</span>
@@ -138,6 +159,7 @@
                             title="تبديل الوضع (داكن / ساطع)">
                         <span id="theme-toggle-icon" class="text-lg select-none leading-none">🌙</span>
                     </button>
+
 
                     {% if current_user %}
                     <div class="flex items-center space-x-2 space-x-reverse text-sm">
@@ -260,12 +282,70 @@
             updateScaleUI();
         }
 
+        // In-app Window Controls (Kiosk Mode)
+        function minimizeMoBiWindow() {
+            fetch('/system/window/minimize', { method: 'POST' }).catch(function(){});
+        }
+
+        function executeMoBiExit() {
+            fetch('/system/window/close', { method: 'POST' }).catch(function(){});
+        }
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initAppChrome);
         } else {
             initAppChrome();
         }
     </script>
+
+    <!-- Native Kiosk Exit Confirmation Modal (Replaces browser confirm dialog) -->
+    <div x-show="showExitModal"
+         x-cloak
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <div class="bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-2xl shadow-2xl max-w-md w-full p-6 text-center transform transition-all select-none"
+             @click.away="showExitModal = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+            
+            <!-- Warning/Power Icon -->
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center border-2 border-red-200 dark:border-red-900/60 shadow-inner">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+            </div>
+
+            <!-- Title & Description -->
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">إغلاق نظام MoBi</h3>
+            <p class="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                هل أنت متأكد من رغبتك في إغلاق نظام MoBi والخروج تماماً؟
+            </p>
+
+            <!-- Action Buttons (Touch-friendly) -->
+            <div class="grid grid-cols-2 gap-3" dir="rtl">
+                <button type="button"
+                        onclick="executeMoBiExit()"
+                        class="h-12 px-4 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-black text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 touch-target">
+                    <span>نعم، إغلاق النظام</span>
+                </button>
+                <button type="button"
+                        @click="showExitModal = false"
+                        class="h-12 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-sm border border-slate-300 dark:border-slate-600 shadow-sm transition-all flex items-center justify-center active:scale-95 touch-target">
+                    <span>إلغاء</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     {% block scripts %}{% endblock %}
 </body>
