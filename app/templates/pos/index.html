@@ -3,10 +3,10 @@
 {% block title %}نقطة البيع السريعة (POS) | MoBi{% endblock %}
 
 {% block content %}
-<div class="space-y-4 pb-40" x-data="posApp()">
+<div class="flex-1 flex flex-col min-h-0 overflow-hidden gap-2" x-data="posApp()">
     
     <!-- Top Barcode Search & Action Bar -->
-    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-300 flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-2.5 flex-shrink-0">
         
         <!-- Barcode / IMEI / Name Input -->
         <div class="relative flex-1 w-full">
@@ -16,18 +16,18 @@
             <input type="text"
                    id="barcode-scanner-input"
                    placeholder="امسح باركود العلبة أو سيريال IMEI أو اكتب اسم الصنف ثم اضغط Enter [F2]..."
-                   class="w-full pr-11 pl-4 py-3 rounded-lg border-2 border-blue-600 bg-white text-slate-950 text-base font-bold focus:outline-none focus:ring-4 focus:ring-blue-200 transition barcode-input-glow shadow-inner"
+                   class="w-full pr-11 pl-4 py-2.5 rounded-lg border-2 border-blue-600 bg-white text-slate-950 text-base font-bold focus:outline-none focus:ring-4 focus:ring-blue-200 transition barcode-input-glow shadow-inner"
                    autocomplete="off"
                    autofocus>
         </div>
 
         <!-- Shortcuts & Quick Actions -->
-        <div class="flex items-center space-x-2 space-x-reverse w-full md:w-auto justify-end">
+        <div class="flex items-center space-x-2 space-x-reverse w-full sm:w-auto justify-end">
             <button type="button"
                     id="btn-clear-cart"
                     hx-post="/pos/clear-cart"
                     hx-target="#pos-cart-container"
-                    class="bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-900 text-sm font-black px-4 py-3 rounded-xl border border-slate-300 hover:border-red-300 transition flex items-center space-x-2 space-x-reverse shadow-sm min-h-[46px] touch-target active:scale-95">
+                    class="bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-900 text-xs font-black px-3.5 py-2.5 rounded-xl border border-slate-300 hover:border-red-300 transition flex items-center space-x-1.5 space-x-reverse shadow-sm min-h-[42px] touch-target active:scale-95">
                 <span>🗑️</span>
                 <span>تفريغ السلة [F9]</span>
             </button>
@@ -35,123 +35,119 @@
 
     </div>
 
-    <!-- Main POS Grid: Checkout Panel on Right (for right-handed touch entry), Cart on Left in RTL -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <!-- Main POS Grid: Checkout Panel on Right, Cart on Left in RTL -->
+    <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-2.5">
         
         <!-- Right Column / Checkout & Payment Panel (lg:col-span-5 xl:col-span-4) -->
-        <div class="order-2 lg:order-1 lg:col-span-5 xl:col-span-4 flex flex-col space-y-4">
+        <div class="order-2 lg:order-1 lg:col-span-5 xl:col-span-4 flex flex-col h-full min-h-0 bg-white p-3 rounded-xl shadow-sm border border-slate-300 justify-between overflow-hidden">
             
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-4">
-                
-                <!-- Customer Selection -->
-                <div>
-                    <label class="block text-xs font-black text-slate-900 mb-1.5">العميل:</label>
-                    <div class="flex items-center space-x-2 space-x-reverse">
-                        <select id="checkout-customer" class="flex-1 bg-white border-2 border-slate-300 text-slate-900 rounded-xl p-3 text-base font-bold focus:border-blue-600 outline-none min-h-[46px]">
-                            {% for cust in customers %}
-                            <option value="{{ cust.id }}" {% if cust.phone == '0000000000' %}selected{% endif %}>
-                                {{ cust.name }} ({{ cust.phone }})
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <button type="button" @click="showAddCustomer = true" class="w-12 h-12 min-w-[46px] min-h-[46px] bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl border border-blue-700 text-lg shadow flex items-center justify-center active:scale-95 touch-target" title="إضافة عميل جديد">
-                            +
-                        </button>
-                    </div>
+            <!-- Customer Selection -->
+            <div>
+                <label class="block text-xs font-black text-slate-900 mb-1">العميل:</label>
+                <div class="flex items-center space-x-1.5 space-x-reverse">
+                    <select id="checkout-customer" class="flex-1 bg-white border-2 border-slate-300 text-slate-900 rounded-xl p-2 text-sm font-bold focus:border-blue-600 outline-none min-h-[42px]">
+                        {% for cust in customers %}
+                        <option value="{{ cust.id }}" {% if cust.phone == '0000000000' %}selected{% endif %}>
+                            {{ cust.name }} ({{ cust.phone }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" @click="showAddCustomer = true" class="w-10 h-10 min-w-[40px] min-h-[40px] bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl border border-blue-700 text-lg shadow flex items-center justify-center active:scale-95 touch-target" title="إضافة عميل جديد">
+                        +
+                    </button>
                 </div>
-
-                <!-- Grand Total Display -->
-                <div class="bg-gradient-to-l from-blue-700 to-indigo-900 text-white p-4 rounded-xl shadow-md text-center border border-blue-900">
-                    <span class="text-xs font-bold text-blue-100 block mb-1">المبلغ المطلوب سداده</span>
-                    <div class="text-3xl font-black tracking-tight" x-text="netTotal.toFixed(2) + ' ' + '{{ currency }}'">
-                        0.00 {{ currency }}
-                    </div>
-                </div>
-
-                <!-- Discount Field -->
-                <div class="flex items-center justify-between bg-slate-100 p-3 rounded-xl border border-slate-300">
-                    <span class="text-xs font-black text-slate-900">خصم إضافي:</span>
-                    <div class="flex items-center space-x-1.5 space-x-reverse">
-                        <input type="number" step="0.5" min="0" x-model.number="discount" @input="recalc()"
-                               class="w-28 text-center font-black py-2 px-3 border-2 border-slate-400 rounded-lg text-base outline-none focus:border-blue-600 text-slate-900 bg-white">
-                        <span class="text-xs text-slate-800 font-black">{{ currency }}</span>
-                    </div>
-                </div>
-
-                <!-- Payment Method Selector -->
-                <div>
-                    <label class="block text-xs font-black text-slate-900 mb-2">طريقة الدفع:</label>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button type="button" @click="paymentMethod = 'cash'"
-                                :class="paymentMethod === 'cash' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
-                            💵 كاش
-                        </button>
-                        <button type="button" @click="paymentMethod = 'card'"
-                                :class="paymentMethod === 'card' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
-                            💳 شبكة
-                        </button>
-                        <button type="button" @click="paymentMethod = 'transfer'"
-                                :class="paymentMethod === 'transfer' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
-                            🏦 تحويل
-                        </button>
-                        <button type="button" @click="paymentMethod = 'debt'"
-                                :class="paymentMethod === 'debt' ? 'bg-amber-600 text-white font-black shadow-md border-amber-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
-                                class="py-3 px-2 text-sm rounded-xl transition border text-center font-black min-h-[48px] flex items-center justify-center gap-1 active:scale-95 touch-target">
-                            📝 آجل
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Paid Amount & Fast Cash Denominations -->
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-black text-slate-900">المبلغ المدفوع:</label>
-                        <button type="button" @click="paidAmount = netTotal" class="text-xs text-blue-700 hover:text-blue-900 hover:underline font-black py-1 px-2 rounded touch-target">
-                            سداد كامل المبلغ
-                        </button>
-                    </div>
-                    <input type="number" step="0.5" x-model.number="paidAmount" @input="recalc()"
-                           class="w-full text-center text-2xl font-black py-2.5 border-2 border-slate-400 rounded-xl outline-none focus:border-blue-600 text-slate-950 bg-white">
-                    
-                    <!-- Quick Cash Buttons -->
-                    <div class="grid grid-cols-4 gap-2 mt-2.5">
-                        <button type="button" @click="paidAmount = 50" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">50</button>
-                        <button type="button" @click="paidAmount = 100" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">100</button>
-                        <button type="button" @click="paidAmount = 200" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">200</button>
-                        <button type="button" @click="paidAmount = 500" class="text-sm bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-2.5 rounded-xl font-black border-2 border-slate-300 hover:border-blue-400 transition min-h-[44px] flex items-center justify-center active:scale-95 touch-target">500</button>
-                    </div>
-                </div>
-
-                <!-- Change Due / Remaining -->
-                <div class="flex justify-between items-center bg-slate-100 p-3 rounded-xl border-2 border-slate-300">
-                    <span class="text-sm font-black text-slate-900" x-text="changeDue >= 0 ? 'المتبقي للزبون (الباقي):' : 'المتبقي على الزبون (ذمة):'"></span>
-                    <span class="text-xl font-black" :class="changeDue >= 0 ? 'text-emerald-700' : 'text-red-700'"
-                          x-text="Math.abs(changeDue).toFixed(2) + ' ' + '{{ currency }}'">
-                    </span>
-                </div>
-
-                <!-- Complete Checkout Button -->
-                <button type="button"
-                        id="btn-complete-sale"
-                        @click="doCheckout()"
-                        class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-4 px-4 rounded-xl shadow-lg hover:shadow-xl transition text-base flex items-center justify-center space-x-2 space-x-reverse border border-emerald-900 min-h-[52px] active:scale-98 touch-target">
-                    <span class="text-xl">🖨️</span>
-                    <span>إتمام البيع وطباعة الفاتورة [F4]</span>
-                </button>
-
             </div>
+
+            <!-- Grand Total Display -->
+            <div class="bg-gradient-to-l from-blue-700 to-indigo-900 text-white p-2.5 rounded-xl shadow-md text-center border border-blue-900">
+                <span class="text-[11px] font-bold text-blue-100 block">المبلغ المطلوب سداده</span>
+                <div class="text-2xl font-black tracking-tight" x-text="netTotal.toFixed(2) + ' ' + '{{ currency }}'">
+                    0.00 {{ currency }}
+                </div>
+            </div>
+
+            <!-- Discount Field -->
+            <div class="flex items-center justify-between bg-slate-100 p-2 rounded-xl border border-slate-300">
+                <span class="text-xs font-black text-slate-900">خصم إضافي:</span>
+                <div class="flex items-center space-x-1 space-x-reverse">
+                    <input type="number" step="0.5" min="0" x-model.number="discount" @input="recalc()"
+                           class="w-24 text-center font-black py-1.5 px-2 border-2 border-slate-400 rounded-lg text-sm outline-none focus:border-blue-600 text-slate-900 bg-white">
+                    <span class="text-xs text-slate-800 font-black">{{ currency }}</span>
+                </div>
+            </div>
+
+            <!-- Payment Method Selector -->
+            <div>
+                <label class="block text-xs font-black text-slate-900 mb-1">طريقة الدفع:</label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button type="button" @click="paymentMethod = 'cash'"
+                            :class="paymentMethod === 'cash' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                            class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
+                        💵 كاش
+                    </button>
+                    <button type="button" @click="paymentMethod = 'card'"
+                            :class="paymentMethod === 'card' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                            class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
+                        💳 شبكة
+                    </button>
+                    <button type="button" @click="paymentMethod = 'transfer'"
+                            :class="paymentMethod === 'transfer' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                            class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
+                        🏦 تحويل
+                    </button>
+                    <button type="button" @click="paymentMethod = 'debt'"
+                            :class="paymentMethod === 'debt' ? 'bg-amber-600 text-white font-black shadow-md border-amber-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
+                            class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
+                        📝 آجل
+                    </button>
+                </div>
+            </div>
+
+            <!-- Paid Amount & Fast Cash Denominations -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-black text-slate-900">المبلغ المدفوع:</label>
+                    <button type="button" @click="paidAmount = netTotal" class="text-xs text-blue-700 hover:text-blue-900 hover:underline font-black py-0.5 px-1.5 rounded touch-target">
+                        سداد كامل المبلغ
+                    </button>
+                </div>
+                <input type="number" step="0.5" x-model.number="paidAmount" @input="recalc()"
+                       class="w-full text-center text-xl font-black py-1.5 border-2 border-slate-400 rounded-xl outline-none focus:border-blue-600 text-slate-950 bg-white">
+                
+                <!-- Quick Cash Buttons -->
+                <div class="grid grid-cols-4 gap-1.5 mt-1.5">
+                    <button type="button" @click="paidAmount = 50" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">50</button>
+                    <button type="button" @click="paidAmount = 100" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">100</button>
+                    <button type="button" @click="paidAmount = 200" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">200</button>
+                    <button type="button" @click="paidAmount = 500" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">500</button>
+                </div>
+            </div>
+
+            <!-- Change Due / Remaining -->
+            <div class="flex justify-between items-center bg-slate-100 p-2 rounded-xl border-2 border-slate-300">
+                <span class="text-xs font-black text-slate-900" x-text="changeDue >= 0 ? 'المتبقي للزبون (الباقي):' : 'المتبقي على الزبون (ذمة):'"></span>
+                <span class="text-lg font-black" :class="changeDue >= 0 ? 'text-emerald-700' : 'text-red-700'"
+                      x-text="Math.abs(changeDue).toFixed(2) + ' ' + '{{ currency }}'">
+                </span>
+            </div>
+
+            <!-- Complete Checkout Button -->
+            <button type="button"
+                    id="btn-complete-sale"
+                    @click="doCheckout()"
+                    class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-3 px-3 rounded-xl shadow-lg hover:shadow-xl transition text-sm flex items-center justify-center space-x-1.5 space-x-reverse border border-emerald-900 min-h-[46px] active:scale-98 touch-target">
+                <span class="text-lg">🖨️</span>
+                <span>إتمام البيع وطباعة الفاتورة [F4]</span>
+            </button>
 
         </div>
 
         <!-- Left Column / Cart Table Column (lg:col-span-7 xl:col-span-8) -->
-        <div class="order-1 lg:order-2 lg:col-span-7 xl:col-span-8 bg-white rounded-xl shadow-sm border border-slate-300 flex flex-col overflow-hidden min-h-[62vh]">
-            <div class="bg-slate-900 text-white px-4 py-3 flex justify-between items-center border-b border-slate-950">
+        <div class="order-1 lg:order-2 lg:col-span-7 xl:col-span-8 bg-white rounded-xl shadow-sm border border-slate-300 flex flex-col h-full min-h-0 overflow-hidden">
+            <div class="bg-slate-900 text-white px-3.5 py-2 flex justify-between items-center border-b border-slate-950 flex-shrink-0">
                 <div class="flex items-center space-x-2 space-x-reverse">
-                    <span class="text-lg">🛒</span>
-                    <h2 class="font-black text-base">سلة الفاتورة الحالية</h2>
+                    <span class="text-base">🛒</span>
+                    <h2 class="font-black text-sm">سلة الفاتورة الحالية</h2>
                 </div>
                 <span class="text-xs text-amber-300 font-mono font-bold bg-slate-800 px-2 py-0.5 rounded border border-slate-700">اختصار الدفع: [F4]</span>
             </div>
@@ -162,62 +158,48 @@
 
     </div>
 
-    <!-- Fixed Bottom Quick Products Shelf (Docked at bottom of viewport) -->
-    <div class="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t-2 border-slate-300 shadow-[0_-8px_25px_rgba(0,0,0,0.12)] transition-all duration-300 no-print">
+    <!-- Fixed Bottom Quick Products Shelf (Docked at bottom of POS viewport) -->
+    <div class="flex-shrink-0 bg-white border border-slate-300 rounded-xl shadow-sm overflow-hidden no-print">
         <!-- Control Header Bar -->
-        <div class="flex items-center justify-between px-4 py-1.5 bg-slate-100 border-b border-slate-200">
+        <div class="flex items-center justify-between px-3 py-1 bg-slate-100 border-b border-slate-200">
             <div class="flex items-center space-x-2 space-x-reverse text-xs font-black text-slate-900">
-                <span class="text-base leading-none">⚡</span>
+                <span class="text-sm leading-none">⚡</span>
                 <span>الأصناف السريعة والمخزون المتوفر</span>
-                <span class="bg-blue-100 text-blue-900 px-2.5 py-0.5 rounded-full text-xs font-bold border border-blue-200">
+                <span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded-full text-xs font-bold border border-blue-200">
                     {{ quick_products|length }} صنف
                 </span>
             </div>
             
-            <div class="flex items-center space-x-2 space-x-reverse">
-                <!-- Scroll arrows for quick browsing -->
-                <div x-show="showQuickBar" class="hidden sm:flex items-center space-x-1 space-x-reverse">
-                    <button type="button" @click="scrollQuickBar(1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليمين">▶</button>
-                    <button type="button" @click="scrollQuickBar(-1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليسار">◀</button>
-                </div>
-                
-                <!-- Collapse / Expand toggle button -->
-                <button type="button"
-                        @click="showQuickBar = !showQuickBar"
-                        class="text-xs font-black text-slate-800 hover:text-blue-700 px-3 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 shadow-sm transition flex items-center space-x-1 space-x-reverse active:scale-95 touch-target">
-                    <span x-text="showQuickBar ? 'طي الشريط ▼' : 'إظهار الأصناف السريعة ▲'"></span>
-                </button>
+            <!-- Navigation scroll arrows -->
+            <div class="flex items-center space-x-1 space-x-reverse">
+                <button type="button" @click="scrollQuickBar(1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليمين">▶</button>
+                <button type="button" @click="scrollQuickBar(-1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليسار">◀</button>
             </div>
         </div>
 
-        <!-- Horizontal Touch-Scrollable Strip -->
-        <div x-show="showQuickBar"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 -translate-y-2"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 translate-y-0"
-             x-transition:leave-end="opacity-0 -translate-y-2"
-             id="quick-products-strip"
-             class="overflow-x-auto flex items-center gap-3 py-2.5 px-4 scrollbar-thin select-none touch-pan-x scroll-smooth">
+        <!-- Horizontal Touch & Wheel Scrollable Strip -->
+        <div id="quick-products-strip"
+             @wheel.prevent="$el.scrollLeft += $event.deltaY"
+             class="overflow-x-auto flex items-center gap-2.5 py-2 px-3 scrollbar-thin select-none touch-pan-x scroll-smooth">
             {% for prod in quick_products %}
             <div onclick="handleScannedBarcode('{{ prod.barcode or prod.id }}')"
-                 class="min-w-[145px] max-w-[160px] h-[112px] flex-shrink-0 bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 p-2.5 rounded-xl cursor-pointer transition text-center shadow-sm hover:shadow group flex flex-col justify-between active:scale-95 touch-target">
-                <div class="text-2xl mb-0.5">
+                 class="pos-quick-card bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 rounded-xl cursor-pointer transition shadow-sm hover:shadow group active:scale-95 touch-target select-none"
+                 title="{{ prod.name }}">
+                <div class="card-icon">
                     {% if prod.has_imei %}📱{% elif 'شاحن' in prod.name or 'كيبل' in prod.name %}🔌{% elif 'شاشة' in prod.name %}🛠️{% else %}📦{% endif %}
                 </div>
-                <div class="text-xs font-bold text-slate-900 line-clamp-2 group-hover:text-blue-700 leading-tight">
+                <div class="card-title font-bold text-slate-900 group-hover:text-blue-700">
                     {{ prod.name }}
                 </div>
-                <div class="mt-0.5 font-black text-sm text-blue-700">
+                <div class="card-price">
                     {{ "%.2f"|format(prod.sell_price) }} {{ currency }}
                 </div>
                 {% if prod.has_imei %}
-                <span class="inline-block text-[11px] bg-amber-100 text-amber-950 px-2 py-0.5 rounded font-bold border border-amber-400">
+                <span class="card-badge bg-amber-100 text-amber-950 border border-amber-400">
                     يتطلب IMEI
                 </span>
                 {% else %}
-                <span class="text-[11px] text-slate-700 font-bold block">
+                <span class="card-badge bg-slate-100 text-slate-700 border border-slate-300">
                     متوفر: {{ prod.quantity }}
                 </span>
                 {% endif %}

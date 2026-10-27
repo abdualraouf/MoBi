@@ -172,20 +172,88 @@ html.dark .label-high-contrast {
     color: #f8fafc !important;
 }
 
-/* Custom Scrollbars */
+/* ==========================================================================
+   Custom High-Contrast Scrollbars (Crisp, High-Visibility Track & Thumb)
+   ========================================================================== */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #e2e8f0;
+    border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
+    background: #475569;
+    border-radius: 9999px;
+    border: 2px solid #e2e8f0;
+    min-height: 24px;
+    min-width: 24px;
 }
 ::-webkit-scrollbar-thumb:hover {
+    background: #1e293b;
+}
+::-webkit-scrollbar-thumb:active {
+    background: #0f172a;
+}
+
+/* Quick Products Horizontal Strip Scrollbar (Dedicated Prominence) */
+#quick-products-strip::-webkit-scrollbar {
+    height: 10px;
+}
+#quick-products-strip::-webkit-scrollbar-track {
+    background: #cbd5e1;
+    border-radius: 9999px;
+    margin: 0 8px;
+}
+#quick-products-strip::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 9999px;
+    border: 2px solid #cbd5e1;
+}
+#quick-products-strip::-webkit-scrollbar-thumb:hover {
+    background: #0f172a;
+}
+
+/* Dark Mode Scrollbars */
+html.dark ::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+html.dark ::-webkit-scrollbar-thumb {
+    background: #64748b;
+    border: 2px solid #1e293b;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+html.dark ::-webkit-scrollbar-thumb:active {
+    background: #cbd5e1;
+}
+
+html.dark #quick-products-strip::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+html.dark #quick-products-strip::-webkit-scrollbar-thumb {
+    background: #64748b;
+    border: 2px solid #0f172a;
+}
+html.dark #quick-products-strip::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Standard W3C Scrollbar Color for Cross-Engine Consistency */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #e2e8f0;
+}
+html.dark * {
+    scrollbar-color: #64748b #1e293b;
+}
+#quick-products-strip {
+    scrollbar-color: #334155 #cbd5e1;
+}
+html.dark #quick-products-strip {
+    scrollbar-color: #64748b #0f172a;
 }
 
 /* POS specific visual tweaks */
@@ -364,3 +432,99 @@ input, textarea, [contenteditable="true"] {
     -ms-user-select: text !important;
     user-select: text !important;
 }
+
+/* ==========================================================================
+   POS Quick Product Shelf & Uniform Card Styling (Strictly Identical Sizes)
+   Active Size: Option 3 (175px × 110px)
+   ========================================================================== */
+:root {
+    --pos-card-width: 175px;
+    --pos-card-height: 110px;
+}
+
+.pos-quick-card {
+    width: var(--pos-card-width) !important;
+    min-width: var(--pos-card-width) !important;
+    max-width: var(--pos-card-width) !important;
+    height: var(--pos-card-height) !important;
+    min-height: var(--pos-card-height) !important;
+    max-height: var(--pos-card-height) !important;
+    flex: 0 0 var(--pos-card-width) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    padding: 0.5rem 0.6rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: center !important;
+}
+
+.pos-quick-card .card-icon {
+    font-size: 1.35rem !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+}
+
+.pos-quick-card .card-title {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 0.78rem !important;
+    line-height: 1.25 !important;
+    max-height: 2.5em !important;
+    width: 100% !important;
+    word-break: break-word !important;
+}
+
+.pos-quick-card .card-price {
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+    line-height: 1.1 !important;
+    color: #1d4ed8 !important;
+    flex-shrink: 0 !important;
+}
+
+.dark .pos-quick-card .card-price {
+    color: #60a5fa !important;
+}
+
+.pos-quick-card .card-badge {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    padding: 0.2rem 0.5rem !important;
+    border-radius: 0.375rem !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-shrink: 0 !important;
+}
+
+.dark .pos-quick-card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+.dark .pos-quick-card:hover {
+    background-color: #334155 !important;
+    border-color: #3b82f6 !important;
+}
+
+.dark .pos-quick-card .card-title {
+    color: #f1f5f9 !important;
+}
+
+.dark .pos-quick-card:hover .card-title {
+    color: #93c5fd !important;
+}
+
+.dark .pos-quick-card .card-badge {
+    background-color: #334155 !important;
+    color: #cbd5e1 !important;
+    border-color: #475569 !important;
+}
+

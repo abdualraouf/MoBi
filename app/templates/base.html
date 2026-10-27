@@ -35,7 +35,7 @@
         })();
     </script>
 </head>
-<body class="bg-slate-100 text-slate-900 antialiased min-h-screen flex flex-col font-sans" x-data="{ sidebarOpen: false, showExitModal: false }" @keydown.escape.window="showExitModal = false">
+<body class="bg-slate-100 text-slate-900 antialiased {% if active_page != 'reports' %}h-screen overflow-hidden{% else %}min-h-screen{% endif %} flex flex-col font-sans" x-data="{ sidebarOpen: false, showExitModal: false }" @keydown.escape.window="showExitModal = false">
 
     <!-- Header Navbar -->
     <header class="main-navbar bg-slate-900 text-white shadow-md z-30 no-print border-b border-slate-800">
@@ -186,11 +186,11 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5">
+    <main class="flex-1 w-full {% if active_page == 'pos' %}min-h-0 overflow-hidden flex flex-col px-3 py-2{% elif active_page != 'reports' %}min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4{% else %}px-4 sm:px-6 lg:px-8 py-5{% endif %}">
         
         <!-- Flash Messages / Toast Alerts -->
         {% if error_msg %}
-        <div class="mb-4 bg-red-50 border-r-4 border-red-500 p-4 rounded-md shadow-sm flex items-center justify-between" x-data="{ show: true }" x-show="show">
+        <div class="mb-3 bg-red-50 border-r-4 border-red-500 p-3 rounded-md shadow-sm flex items-center justify-between flex-shrink-0" x-data="{ show: true }" x-show="show">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <span class="text-red-500 text-lg">⚠️</span>
                 <p class="text-sm text-red-700 font-semibold">{{ error_msg }}</p>
@@ -200,7 +200,7 @@
         {% endif %}
 
         {% if success_msg %}
-        <div class="mb-4 bg-green-50 border-r-4 border-green-500 p-4 rounded-md shadow-sm flex items-center justify-between" x-data="{ show: true }" x-show="show">
+        <div class="mb-3 bg-green-50 border-r-4 border-green-500 p-3 rounded-md shadow-sm flex items-center justify-between flex-shrink-0" x-data="{ show: true }" x-show="show">
             <div class="flex items-center space-x-3 space-x-reverse">
                 <span class="text-green-500 text-lg">✅</span>
                 <p class="text-sm text-green-700 font-semibold">{{ success_msg }}</p>
@@ -213,7 +213,7 @@
     </main>
 
     <!-- Global Footer (Screen only) -->
-    <footer class="bg-white border-t border-gray-200 py-3 text-center text-xs text-gray-500 no-print mt-auto">
+    <footer class="bg-white border-t border-slate-200 {% if active_page == 'pos' %}py-1 text-[11px] leading-tight{% else %}py-2 text-xs mt-auto{% endif %} text-center text-gray-500 no-print flex-shrink-0">
         <p>{{ shop.shop_name if shop else 'MoBi' }} &bull; نظام تشغيلي محلي مستقل &bull; النسخة 1.0.0</p>
     </footer>
 
