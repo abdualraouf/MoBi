@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة نوع: {{ product_type.name }} | MoBi{% endblock %}
+
+{% block content %}
+<div class="space-y-5" x-data="{ showMoveModal: false, selectedTargetType: '' }">
+
+    <!-- Header & Back Navigation -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-300">
+        <div class="flex items-center gap-3">
+            <a href="/inventory?tab=types" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg flex items-center justify-center font-bold text-sm transition" title="رجوع لقائمة الأنواع">
+                ←
+            </a>
+            <div>
+                <h1 class="text-lg font-black text-slate-900 flex items-center gap-2">
+                    <span class="text-2xl leading-none">{{ product_type.icon }}</span>
+                    <span>تعديل نوع الصنف: {{ product_type.name }}</span>
+                    {% if product_type.is_archived %}
+                    <span class="text-[11px] bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold">مؤرشف</span>
+                    {% endif %}
+                </h1>
+                <p class="text-xs text-slate-500 mt-0.5">يحتوي هذا النوع على <strong>{{ products_count }}</strong> منتج مسجل في المخزون</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a href="/inventory?type_id={{ product_type.id }}" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-2 px-3.5 rounded-lg border border-blue-200 transition">
+                📦 عرض منتجات هذا النوع ({{ products_count }})
+            </a>
+        </div>
+    </div>
+
+    {% if error_msg %}
+    <div class="bg-red-50 border-r-4 border-red-500 p-3 rounded-lg flex items-center justify-between text-xs font-bold text-red-700">
+        <span>⚠️ {{ error_msg }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Grid: Type Details Form & Attributes List -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        <!-- Left: Type Settings (lg:col-span-4) -->
+        <div class="lg:col-span-4 space-y-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-4">
+                <h2 class="text-sm font-black text-slate-900 border-b border-slate-200 pb-2">بيانات وإعدادات النوع</h2>
+                
+                <form method="POST" action="/inventory/types/{{ product_type.id }}/update" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">اسم النوع *</label>
+                        <input type="text" name="name" value="{{ product_type.name }}" required
+                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">أيقونة النوع (إيموجي)</label>
+                        <div class="flex items-center gap-2 mb-2">
+                            <input type="text" name="icon" id="type-icon-input" value="{{ product_type.icon }}" maxlength="4"
+                                   class="w-16 p-2 text-2xl text-center border border-slate-300 rounded-lg outline-none font-bold">
+                            <span class="text-xs text-slate-500">اختر من القائمة أدناه أو اكتب إيموجي:</span>
+                        </div>
+                        
+                        <!-- Emoji Picker Grid -->
+                        <div class="grid grid-cols-8 gap-1.5 p-2 bg-slate-50 rounded-lg border border-slate-200 max-h-32 overflow-y-auto">
+                            {% for emoji in emoji_picker %}
+                            <button type="button" onclick="document.getElementById('type-icon-input').value = '{{ emoji }}'"
+                                    class="h-8 flex items-center justify-center text-lg hover:bg-white rounded hover:shadow-sm transition">
+                                {{ emoji }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Visibility Toggles -->
+                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                        <label class="flex items-center justify-between cursor-pointer">
+                            <span class="text-xs font-bold text-slate-900">🛒 يظهر في نقطة البيع (POS)</span>
+                            <input type="checkbox" name="show_in_pos" value="1" {% if product_type.show_in_pos %}checked{% endif %}
+                                   class="w-4 h-4 text-blue-600 rounded">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer pt-1 border-t border-slate-200">
+                            <span class="text-xs font-bold text-slate-900">🔧 متاح كقطع غيار في الصيانة</span>
+                            <input type="checkbox" name="use_in_repairs" value="1" {% if product_type.use_in_repairs %}checked{% endif %}
+                                   class="w-4 h-4 text-blue-600 rounded">
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow text-xs transition">
+                        حفظ بيانات النوع
+                    </button>
+                </form>
+            </div>
+
+            <!-- Danger Zone / Move Products -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-3">
+                <h3 class="text-xs font-black text-slate-800">إجراءات متقدمة</h3>
+
+                {% if products_count > 0 %}
+                <button type="button" @click="showMoveModal = true"
+                        class="w-full py-2 px-3 text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg transition text-right flex items-center justify-between">
+                    <span>نقل منتجات هذا النوع إلى نوع آخر...</span>
+                    <span>⮂</span>
+                </button>
+                {% endif %}
+
+                {% if product_type.is_archived %}
+                <form method="POST" action="/inventory/types/{{ product_type.id }}/restore">
+                    <button type="submit" class="w-full py-2 px-3 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg transition text-right">
+                        إلغاء الأرشفة وتنشيط النوع
+                    </button>
+                </form>
+                {% else %}
+                <form method="POST" action="/inventory/types/{{ product_type.id }}/archive">
+                    <button type="submit" class="w-full py-2 px-3 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg transition text-right">
+                        أرشفة هذا النوع (إخفاء من القوائم)
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if products_count == 0 %}
+                <form method="POST" action="/inventory/types/{{ product_type.id }}/delete" onsubmit="return confirm('هل أنت متأكد من حذف هذا النوع نهائياً؟')">
+                    <button type="submit" class="w-full py-2 px-3 text-xs font-bold bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 rounded-lg transition text-right">
+                        حذف النوع نهائياً (فارغ)
+                    </button>
+                </form>
+                {% else %}
+                <p class="text-[11px] text-slate-500 font-normal">لا يمكن حذف النوع لوجود منتجات تابعة له. انقلها لنوع آخر أو أرشفه.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right: Custom Attributes Table & Add Attribute (lg:col-span-8) -->
+        <div class="lg:col-span-8 space-y-4">
+            
+            <!-- Existing Attributes Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
+                <div class="px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
+                    <div>
+                        <h2 class="font-black text-sm">الخصائص المخصصة لهذا النوع ({{ product_type.attributes|length }})</h2>
+                        <p class="text-[11px] text-slate-400 mt-0.5">تظهر هذه الخانات تلقائياً عند إضافة أو تعديل أي منتج يتبع هذا النوع</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-100 border-b border-slate-200 font-bold text-slate-800">
+                            <tr>
+                                <th class="py-3 px-3.5">الترتيب</th>
+                                <th class="py-3 px-3.5">اسم الخاصية</th>
+                                <th class="py-3 px-3.5">نوع الخانة</th>
+                                <th class="py-3 px-3.5 text-center">الخيارات / المعاينة</th>
+                                <th class="py-3 px-3.5 text-center">الشروط</th>
+                                <th class="py-3 px-3.5 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            {% for attr in product_type.attributes %}
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="py-3 px-3.5">
+                                    <div class="flex items-center gap-1">
+                                        <form method="POST" action="/inventory/attributes/{{ attr.id }}/move?direction=up">
+                                            <button type="submit" class="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded font-bold transition" title="تحريك لأعلى">▲</button>
+                                        </form>
+                                        <form method="POST" action="/inventory/attributes/{{ attr.id }}/move?direction=down">
+                                            <button type="submit" class="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded font-bold transition" title="تحريك لأسفل">▼</button>
+                                        </form>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3.5 font-bold text-slate-900 text-sm">
+                                    {{ attr.name }}
+                                </td>
+                                <td class="py-3 px-3.5 text-slate-700">
+                                    {% if attr.field_kind == 'select' %}
+                                        <span class="bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-bold">قائمة اختيارات</span>
+                                    {% elif attr.field_kind == 'number' %}
+                                        <span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded font-bold">رقم</span>
+                                    {% elif attr.field_kind == 'boolean' %}
+                                        <span class="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-bold">نعم / لا</span>
+                                    {% else %}
+                                        <span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded font-bold">نص</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-3.5 text-center">
+                                    {% if attr.field_kind == 'select' and attr.options_list %}
+                                    <div class="flex flex-wrap gap-1 justify-center max-w-xs mx-auto">
+                                        {% for opt in attr.options_list[:4] %}
+                                        <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px]">{{ opt }}</span>
+                                        {% endfor %}
+                                        {% if attr.options_list|length > 4 %}
+                                        <span class="text-[10px] text-slate-500 font-bold">+{{ attr.options_list|length - 4 }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-slate-400">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-3.5 text-center">
+                                    <div class="flex flex-wrap gap-1 justify-center">
+                                        {% if attr.is_required %}
+                                        <span class="bg-red-100 text-red-800 px-1.5 py-0.5 rounded text-[10px] font-bold">إلزامي</span>
+                                        {% endif %}
+                                        {% if attr.is_unique %}
+                                        <span class="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded text-[10px] font-bold" title="قيمة فريدة لا تتكرر">🔒 فريد</span>
+                                        {% endif %}
+                                        {% if attr.show_on_receipt %}
+                                        <span class="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded text-[10px] font-bold" title="يظهر في الفاتورة">📄 فاتورة</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3.5 text-center">
+                                    <form method="POST" action="/inventory/attributes/{{ attr.id }}/delete" onsubmit="return confirm('هل أنت متأكد من حذف خاصية ({{ attr.name }})؟ سيتم حذف كافة قيمها المسجلة بالمنتجات.')">
+                                        <button type="submit" class="text-red-600 hover:text-red-800 font-bold text-xs p-1 rounded hover:bg-red-50 transition" title="حذف الخاصية">
+                                            🗑️ حذف
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-8 text-slate-400 font-bold">
+                                    لا توجد خصائص مخصصة لهذا النوع بعد. أضف خاصية جديدة من النموذج أدناه.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add Attribute Form Card -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-300 space-y-4">
+                <h3 class="text-sm font-black text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-1.5">
+                    <span>➕</span>
+                    <span>إضافة خاصية جديدة لهذا النوع</span>
+                </h3>
+
+                <form method="POST" action="/inventory/types/{{ product_type.id }}/attributes/add" class="space-y-3.5" x-data="{ kind: 'text' }">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">اسم الخاصية *</label>
+                            <input type="text" name="name" required placeholder="مثال: IMEI، سعة الذاكرة، القدرة W..."
+                                   class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">نوع الخانة *</label>
+                            <select name="field_kind" x-model="kind" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="text">نص حر (Text)</option>
+                                <option value="number">قيمة رقمية (Number)</option>
+                                <option value="select">قائمة خيارات محددة (Dropdown Select)</option>
+                                <option value="boolean">نعم / لا (Checkbox)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Options list for select -->
+                    <div x-show="kind === 'select'" style="display: none;">
+                        <label class="block text-xs font-bold text-slate-800 mb-1">الخيارات المتاحة (خيار في كل سطر أو مفصولة بفاصلة)</label>
+                        <textarea name="options_text" rows="3" placeholder="مثال:&#10;أسود&#10;أبيض&#10;أزرق"
+                                  class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <!-- Attribute Flags -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="is_required" value="1" class="w-4 h-4 text-blue-600 rounded">
+                            <span class="text-xs font-bold text-slate-900">إلزامية عند الإدخال</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="is_unique" value="1" class="w-4 h-4 text-amber-600 rounded">
+                            <span class="text-xs font-bold text-slate-900" title="قيمة لا تتكرر أبداً بين المنتجات (مثل IMEI)">🔒 فريدة (لا تتكرر)</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="show_on_receipt" value="1" class="w-4 h-4 text-blue-600 rounded">
+                            <span class="text-xs font-bold text-slate-900">📄 تظهر في الفاتورة</span>
+                        </label>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-lg text-xs shadow transition flex items-center gap-1.5">
+                            <span>➕</span>
+                            <span>إضافة الخاصية</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Move Products Modal -->
+    <div x-show="showMoveModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4" @click.away="showMoveModal = false">
+            <h3 class="font-black text-base text-slate-900">نقل منتجات نوع ({{ product_type.name }})</h3>
+            <p class="text-xs text-slate-600">سيتم نقل جميع المنتجات ({{ products_count }} منتج) إلى نوع جديد. الخصائص المتطابقة في الاسم والنوع ستنتقل قيمها، والخصائص غير الموجودة في النوع الهدف ستُحذف قيمها دون حذف المنتجات نفسها.</p>
+            
+            <form method="POST" action="/inventory/types/{{ product_type.id }}/move-products" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1">النوع الهدف:</label>
+                    <select name="to_type_id" required class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900">
+                        <option value="">-- اختر النوع البديل --</option>
+                        {% for other in all_other_types %}
+                        <option value="{{ other.id }}">{{ other.icon }} {{ other.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" @click="showMoveModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold">تأكيد النقل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

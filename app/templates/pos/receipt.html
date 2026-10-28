@@ -97,10 +97,14 @@
                 <tr>
                     <td style="padding: 4px 0; font-weight: bold;">
                         {{ item.product_name }}
-                        {% if item.imei %}
-                        <div style="font-size: 9px; font-family: monospace; font-weight: normal;">
-                            IMEI: {{ item.imei }}
-                        </div>
+                        {% if item.snapshot_list %}
+                            {% for a in item.snapshot_list %}
+                                {% if a.get('show_on_receipt', True) %}
+                                <div style="font-size: 9px; font-family: monospace; font-weight: normal;">
+                                    {{ a.name }}: {{ a.value }}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
                         {% endif %}
                     </td>
                     <td style="padding: 4px 0; text-align: center;">{{ item.quantity }}</td>

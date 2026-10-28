@@ -1,26 +1,28 @@
+import json
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.models.product import Product
-from app.models.product_item import ProductItem
+from app.models.attribute_value import ProductAttributeValue
 from app.models.customer import Customer
 from app.models.invoice import Invoice, InvoiceItem
 from app.models.user import User
 
 # In-memory cart store per user session (keyed by user_id)
-# Each cart item: {
+# Each cart item:
+# {
 #   "cart_id": str,
 #   "product_id": int,
-#   "product_item_id": Optional[int],
 #   "name": str,
 #   "barcode": str,
-#   "imei": Optional[str],
 #   "unit_price": float,
 #   "buy_price": float,
+#   "min_price": float,
 #   "quantity": int,
-#   "has_imei": bool,
-#   "max_quantity": int
+#   "is_unit": bool,
+#   "max_quantity": int,
+#   "attributes": list[dict]
 # }
 ACTIVE_CARTS: Dict[int, List[dict]] = {}
 
@@ -32,96 +34,142 @@ def get_user_cart(user_id: int) -> List[dict]:
 def clear_user_cart(user_id: int):
     ACTIVE_CARTS[user_id] = []
 
-def add_to_cart_by_code(db: Session, user_id: int, code: str) -> tuple[bool, str]:
+def _add_product_to_cart(cart: List[dict], product: Product) -> Tuple[bool, str]:
+    if not product.is_active or product.is_archived:
+        return False, f"المنتج ({product.name}) غير متاح أو مؤرشف"
+
+    if product.product_type and not product.product_type.show_in_pos:
+        return False, f"الصنف ({product.name}) غير معروض للبيع في نقطة البيع (مخصص للصيانة فقط)"
+
+    if product.quantity <= 0:
+        return False, f"المنتج ({product.name}) نفد من المخزون"
+
+    # Unit product handling (e.g. phones with unique IMEI/serial)
+    if product.is_unit:
+        for item in cart:
+            if item["product_id"] == product.id:
+                uniq = product.primary_unique_value or product.barcode
+                return False, f"الجهاز ({product.name} - {uniq}) مضاف بالفعل إلى السلة"
+
+        cart.append({
+            "cart_id": f"unit_{product.id}",
+            "product_id": product.id,
+            "name": product.name,
+            "barcode": product.barcode or "",
+            "unit_price": float(product.sell_price),
+            "buy_price": float(product.buy_price),
+            "min_price": float(product.min_sell_price),
+            "quantity": 1,
+            "is_unit": True,
+            "max_quantity": 1,
+            "attributes": [
+                {
+                    "name": a["name"],
+                    "value": a["value"],
+                    "is_unique": a.get("is_unique", False),
+                    "show_on_receipt": a.get("show_on_receipt", False)
+                }
+                for a in product.display_attributes
+            ]
+        })
+        uniq_info = f" ({product.primary_unique_value})" if product.primary_unique_value else ""
+        return True, f"تمت إضافة الجهاز: {product.name}{uniq_info}"
+
+    # Bulk product handling (accessories, cables, etc.)
+    for item in cart:
+        if item["product_id"] == product.id and not item["is_unit"]:
+            if item["quantity"] + 1 > product.quantity:
+                return False, f"الكمية المطلوبة تتجاوز المخزون المتوفر ({product.quantity})"
+            item["quantity"] += 1
+            return True, f"تمت زيادة كمية {product.name}"
+
+    cart.append({
+        "cart_id": f"prod_{product.id}",
+        "product_id": product.id,
+        "name": product.name,
+        "barcode": product.barcode or "",
+        "unit_price": float(product.sell_price),
+        "buy_price": float(product.buy_price),
+        "min_price": float(product.min_sell_price),
+        "quantity": 1,
+        "is_unit": False,
+        "max_quantity": product.quantity,
+        "attributes": [
+            {
+                "name": a["name"],
+                "value": a["value"],
+                "is_unique": a.get("is_unique", False),
+                "show_on_receipt": a.get("show_on_receipt", False)
+            }
+            for a in product.display_attributes
+        ]
+    })
+    return True, f"تمت إضافة {product.name}"
+
+def add_to_cart_by_code(db: Session, user_id: int, code: str) -> Tuple[bool, str]:
     """
-    Intelligent scanner handler:
-    1. Checks if code matches a specific phone IMEI in stock.
-    2. Checks if code matches a product barcode (UPC/EAN/custom).
-    3. Checks if code matches product ID.
+    Intelligent scanner & search handler:
+    1. Check exact barcode match.
+    2. Check exact unique attribute value match (e.g. IMEI, Serial Number).
+    3. Check product ID if numeric.
     """
-    code = code.strip()
+    code = (code or "").strip()
     if not code:
         return False, "الرمز المدخل فارغ"
 
     cart = get_user_cart(user_id)
 
-    # 1. Search for phone by IMEI
-    phone_item = db.query(ProductItem).filter(
-        or_(ProductItem.imei == code, ProductItem.imei2 == code),
-        ProductItem.status == "in_stock"
+    # 1. Exact Barcode Match
+    product = db.query(Product).filter(
+        Product.barcode == code,
+        Product.is_active == True,
+        Product.is_archived == False
     ).first()
 
-    if phone_item:
-        # Check if this exact IMEI is already in the cart
-        for item in cart:
-            if item.get("product_item_id") == phone_item.id:
-                return False, f"الجهاز بالرقم التسلسلي {phone_item.imei} مضاف بالفعل إلى السلة"
+    # 2. Match on custom attribute values (IMEI, Serial, etc.)
+    if not product:
+        attr_val = db.query(ProductAttributeValue).filter(
+            ProductAttributeValue.value == code
+        ).join(Product).filter(
+            Product.is_active == True,
+            Product.is_archived == False
+        ).first()
 
-        product = phone_item.product
-        price = phone_item.sell_price if phone_item.sell_price is not None else product.sell_price
-        buy_p = phone_item.buy_price if phone_item.buy_price is not None else product.buy_price
+        if attr_val and attr_val.product:
+            product = attr_val.product
 
-        cart.append({
-            "cart_id": f"imei_{phone_item.id}",
-            "product_id": product.id,
-            "product_item_id": phone_item.id,
-            "name": f"{product.name} ({phone_item.color or ''} {phone_item.storage or ''})",
-            "barcode": product.barcode or "",
-            "imei": phone_item.imei,
-            "unit_price": float(price),
-            "buy_price": float(buy_p),
-            "quantity": 1,
-            "has_imei": True,
-            "max_quantity": 1
-        })
-        return True, f"تمت إضافة الجهاز IMEI: {phone_item.imei}"
-
-    # 2. Search by Product Barcode
-    product = db.query(Product).filter(Product.barcode == code, Product.is_active == True).first()
-    
-    # 3. Search by ID if numeric
+    # 3. Match on Product ID
     if not product and code.isdigit():
-        product = db.query(Product).filter(Product.id == int(code), Product.is_active == True).first()
+        product = db.query(Product).filter(
+            Product.id == int(code),
+            Product.is_active == True,
+            Product.is_archived == False
+        ).first()
 
     if product:
-        if product.has_imei:
-            return False, f"هذا المنتج ({product.name}) يتطلب مسح رقم الـ IMEI الخاص بالجهاز المحدد"
+        return _add_product_to_cart(cart, product)
 
-        # Check existing item in cart
-        for item in cart:
-            if item["product_id"] == product.id and not item["has_imei"]:
-                if item["quantity"] + 1 > product.quantity:
-                    return False, f"الكمية المطلوبة تتجاوز المخزون المتوفر ({product.quantity})"
-                item["quantity"] += 1
-                return True, f"تمت زيادة كمية {product.name}"
+    return False, f"لم يتم العثور على صنف أو جهاز مطابق للرمز: {code}"
 
-        # New line item
-        if product.quantity <= 0:
-            return False, f"المنتج {product.name} نفد من المخزون"
+def add_to_cart_by_product_id(db: Session, user_id: int, product_id: int) -> Tuple[bool, str]:
+    product = db.query(Product).filter(
+        Product.id == product_id,
+        Product.is_active == True,
+        Product.is_archived == False
+    ).first()
 
-        cart.append({
-            "cart_id": f"prod_{product.id}",
-            "product_id": product.id,
-            "product_item_id": None,
-            "name": product.name,
-            "barcode": product.barcode or "",
-            "imei": None,
-            "unit_price": float(product.sell_price),
-            "buy_price": float(product.buy_price),
-            "quantity": 1,
-            "has_imei": False,
-            "max_quantity": product.quantity
-        })
-        return True, f"تمت إضافة {product.name}"
+    if not product:
+        return False, "المنتج غير موجود أو مؤرشف"
 
-    return False, f"لم يتم العثور على صنف أو هاتف مطابق للرمز: {code}"
+    cart = get_user_cart(user_id)
+    return _add_product_to_cart(cart, product)
 
 def update_cart_quantity(user_id: int, cart_id: str, delta: int) -> bool:
     cart = get_user_cart(user_id)
     for i, item in enumerate(cart):
         if item["cart_id"] == cart_id:
-            if item["has_imei"]:
-                return False  # IMEI devices are strictly quantity 1
+            if item["is_unit"]:
+                return False  # Unit devices are strictly quantity 1
             new_qty = item["quantity"] + delta
             if new_qty <= 0:
                 cart.pop(i)
@@ -157,7 +205,7 @@ def process_checkout(
     paid_amount: float,
     discount: float = 0.0,
     notes: Optional[str] = None
-) -> tuple[Optional[Invoice], str]:
+) -> Tuple[Optional[Invoice], str]:
     cart = get_user_cart(user.id)
     if not cart:
         return None, "سلة المبيعات فارغة"
@@ -167,13 +215,19 @@ def process_checkout(
     total_amount = totals["total"]
     remaining = max(0.0, total_amount - paid_amount)
 
+    # Validate stock before processing
+    for item in cart:
+        prod = db.query(Product).filter(Product.id == item["product_id"]).first()
+        if not prod or prod.quantity < item["quantity"]:
+            prod_name = prod.name if prod else item["name"]
+            return None, f"عذراً، المخزون المتوفر من ({prod_name}) غير كافٍ لإتمام الفاتورة"
+
     # Generate unique invoice number: INV-YYYYMMDD-XXXX
     date_str = datetime.utcnow().strftime("%Y%m%d")
     today_count = db.query(Invoice).filter(Invoice.created_at >= datetime.utcnow().date()).count() + 1
     invoice_number = f"INV-{date_str}-{today_count:04d}"
 
     try:
-        # Create Invoice record
         invoice = Invoice(
             invoice_number=invoice_number,
             customer_id=customer_id,
@@ -193,16 +247,16 @@ def process_checkout(
         if remaining > 0 and customer_id:
             customer = db.query(Customer).filter(Customer.id == customer_id).first()
             if customer:
-                customer.balance -= remaining  # Negative balance indicates debt
+                customer.balance -= remaining
 
-        # Create Invoice Items and update stock
+        # Create Invoice Items and deduct stock
         for item in cart:
+            snapshot_json = json.dumps(item.get("attributes", []), ensure_ascii=False)
             inv_item = InvoiceItem(
                 invoice_id=invoice.id,
                 product_id=item["product_id"],
-                product_item_id=item["product_item_id"],
                 product_name=item["name"],
-                imei=item["imei"],
+                attributes_snapshot=snapshot_json,
                 quantity=item["quantity"],
                 buy_price=item["buy_price"],
                 unit_price=item["unit_price"],
@@ -210,18 +264,10 @@ def process_checkout(
             )
             db.add(inv_item)
 
-            # Deduct stock
+            # Deduct product stock
             product = db.query(Product).filter(Product.id == item["product_id"]).first()
             if product:
-                if item["has_imei"] and item["product_item_id"]:
-                    p_item = db.query(ProductItem).filter(ProductItem.id == item["product_item_id"]).first()
-                    if p_item:
-                        p_item.status = "sold"
-                        p_item.invoice_id = invoice.id
-                        p_item.sold_at = datetime.utcnow()
-                    product.quantity = max(0, product.quantity - 1)
-                else:
-                    product.quantity = max(0, product.quantity - item["quantity"])
+                product.quantity = max(0, product.quantity - item["quantity"])
 
         db.commit()
         db.refresh(invoice)

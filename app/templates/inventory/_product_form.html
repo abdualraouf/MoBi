@@ -1,0 +1,191 @@
+<!-- Product Form Modal Partial (HTMX Swap Target) -->
+<div id="product-modal-content" class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto" dir="rtl">
+    
+    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+        <div class="flex items-center gap-2">
+            <span class="text-xl">
+                {% if mode == 'edit' %}✏️{% elif mode == 'duplicate' %}⧉{% else %}➕{% endif %}
+            </span>
+            <h3 class="font-black text-lg text-slate-900">
+                {% if mode == 'edit' %}تعديل صنف: {{ product.name }}{% elif mode == 'duplicate' %}نسخ صنف: {{ product.name }}{% else %}إضافة صنف جديد للمخزون{% endif %}
+            </h3>
+        </div>
+        <button type="button" @click="showProductModal = false" class="text-slate-400 hover:text-slate-600 font-bold text-2xl leading-none">&times;</button>
+    </div>
+
+    {% if error_msg %}
+    <div class="bg-red-50 border-r-4 border-red-500 p-3 rounded-lg flex items-center justify-between text-xs font-bold text-red-700">
+        <span>⚠️ {{ error_msg }}</span>
+    </div>
+    {% endif %}
+
+    <form hx-post="/inventory/product/save"
+          hx-target="#product-modal-content"
+          hx-swap="outerHTML"
+          class="space-y-3.5">
+        
+        {% if mode == 'edit' and product and product.id %}
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        {% endif %}
+        <input type="hidden" name="return_url" id="form-return-url" value="/inventory">
+
+        <!-- Type Selection -->
+        <div>
+            <label class="block text-xs font-black text-slate-800 mb-1">النوع / القسم *</label>
+            {% if mode == 'edit' %}
+                <input type="hidden" name="type_id" value="{{ selected_type.id }}">
+                <div class="p-2.5 bg-slate-100 rounded-lg text-sm font-bold text-slate-800 border border-slate-300 flex items-center gap-2">
+                    <span>{{ selected_type.icon }}</span>
+                    <span>{{ selected_type.name }}</span>
+                    <span class="text-[11px] text-slate-500 font-normal mr-auto">(لا يمكن تغيير نوع الصنف بعد إنشائه، يمكنك نقله من تبويب الأنواع)</span>
+                </div>
+            {% else %}
+                <select name="type_id" id="prod-type-select"
+                        hx-get="/inventory/type-fields"
+                        hx-trigger="change"
+                        hx-target="#attribute-fields"
+                        hx-swap="outerHTML"
+                        class="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-slate-50 font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500" required>
+                    {% for t in types %}
+                    <option value="{{ t.id }}" {% if selected_type and selected_type.id == t.id %}selected{% endif %}>
+                        {{ t.icon }} {{ t.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+        </div>
+
+        <!-- Product Name -->
+        <div>
+            <label class="block text-xs font-black text-slate-800 mb-1">اسم الصنف أو الموديل *</label>
+            <input type="text" name="name" required
+                   value="{{ product.name if product else '' }}"
+                   placeholder="مثال: شاحن سريع Anker 20W Type-C أو Apple iPhone 15 Pro"
+                   class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 {% if field_errors.get('name') %}border-red-500 bg-red-50{% endif %}">
+            {% if field_errors.get('name') %}
+            <p class="text-[11px] text-red-600 font-bold mt-0.5">{{ field_errors.get('name') }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Barcode -->
+        <div>
+            <div class="flex justify-between items-center mb-1">
+                <label class="text-xs font-black text-slate-800">الباركود المصنعي أو الداخلي</label>
+                <span class="text-[11px] text-slate-500">اتركه فارغاً للتوليد التلقائي (MB000123)</span>
+            </div>
+            <div class="relative">
+                <input type="text" name="barcode" id="form-prod-barcode"
+                       value="{{ product.barcode if product and mode != 'duplicate' else '' }}"
+                       placeholder="امسح باركود العلبة أو اتركه فارغاً ليولّده النظام"
+                       class="w-full p-2.5 pl-24 border border-slate-300 rounded-lg text-sm font-mono font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 {% if field_errors.get('barcode') %}border-red-500 bg-red-50{% endif %}">
+                <button type="button" onclick="generateRandomFormBarcode()"
+                        class="absolute left-1.5 top-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs px-2.5 py-1.5 rounded-md font-bold border border-slate-300 transition">
+                    توليد كود
+                </button>
+            </div>
+            {% if field_errors.get('barcode') %}
+            <p class="text-[11px] text-red-600 font-bold mt-0.5">{{ field_errors.get('barcode') }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Tags (Groups) Selection -->
+        {% if tags %}
+        <div>
+            <label class="block text-xs font-black text-slate-800 mb-1">المجموعات / التاغات (اختياري)</label>
+            <div class="flex flex-wrap gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                {% for tag in tags %}
+                <label class="inline-flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-md border border-slate-300 cursor-pointer text-xs font-bold hover:bg-blue-50 transition">
+                    <input type="checkbox" name="tags" value="{{ tag.id }}"
+                           {% if tag.id in selected_tag_ids %}checked{% endif %}
+                           class="w-3.5 h-3.5 text-blue-600 rounded">
+                    <span>{{ tag.name }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Prices -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+                <label class="block text-xs font-black text-slate-800 mb-1">سعر التكلفة (الشراء) *</label>
+                <input type="number" step="0.5" name="buy_price" required min="0"
+                       value="{{ product.buy_price if product else '0' }}"
+                       class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-black text-slate-800 mb-1">سعر البيع *</label>
+                <input type="number" step="0.5" name="sell_price" required min="0"
+                       value="{{ product.sell_price if product else '0' }}"
+                       class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-black text-blue-700 text-center outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-black text-slate-800 mb-1">أدنى سعر بيع (للخصم)</label>
+                <input type="number" step="0.5" name="min_sell_price" min="0"
+                       value="{{ product.min_sell_price if product else '0' }}"
+                       class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 text-center outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <!-- Quantity & Unit -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-300">
+                <label class="block text-xs font-black text-slate-900 mb-1">الكمية المتوفرة</label>
+                {% if selected_type and selected_type.has_unique_attribute %}
+                    <input type="number" name="quantity" value="{{ product.quantity if (product and mode == 'edit') else '1' }}" min="0" max="1"
+                           class="w-full p-2 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center bg-white outline-none">
+                    <p class="text-[10px] text-amber-900 font-bold mt-1">🔒 هذا النوع له خاصية فريدة، لذا كل جهاز يُسجل كوحدة مستقلة بكمية 1.</p>
+                {% else %}
+                    <input type="number" name="quantity" value="{{ product.quantity if product else '1' }}" min="0"
+                           class="w-full p-2 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center outline-none focus:ring-2 focus:ring-blue-500">
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-slate-800 mb-1">حد التنبيه بالنقصان</label>
+                <input type="number" name="alert_quantity" value="{{ product.alert_quantity if product else '3' }}" min="0"
+                       class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-800 text-center outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-slate-800 mb-1">الوحدة</label>
+                <input type="text" name="unit" value="{{ product.unit if product else 'قطعة' }}"
+                       placeholder="قطعة، شاشة، جهاز..."
+                       class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-800 text-center outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <!-- Dynamic Attributes Container -->
+        {% include "inventory/_attribute_fields.html" %}
+
+        <!-- Modal Footer Actions -->
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+            <button type="button" @click="showProductModal = false"
+                    class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition">
+                إلغاء
+            </button>
+            <button type="submit"
+                    class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition flex items-center gap-1.5">
+                <span>💾</span>
+                <span>حفظ الصنف</span>
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+function generateRandomFormBarcode() {
+    const input = document.getElementById('form-prod-barcode');
+    if (input) {
+        input.value = 'MB' + Math.floor(100000 + Math.random() * 900000);
+    }
+}
+// Keep return url synced to current browser location
+(function() {
+    const retInput = document.getElementById('form-return-url');
+    if (retInput) {
+        retInput.value = window.location.pathname + window.location.search;
+    }
+})();
+</script>

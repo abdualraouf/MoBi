@@ -1,0 +1,123 @@
+<!-- POS Picker Grid Partial -->
+<div id="pos-picker-content" class="h-full flex flex-col bg-white dark:bg-slate-900" dir="rtl">
+    
+    <!-- Picker Header -->
+    <div class="p-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-950 flex-shrink-0">
+        <div class="flex items-center gap-2">
+            <span class="text-xl">{{ icon }}</span>
+            <h3 class="font-black text-sm text-white">{{ title }}</h3>
+            <span class="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-bold">
+                {{ groups|length }} صنف
+            </span>
+        </div>
+        <button type="button" @click="closePicker()"
+                class="text-slate-400 hover:text-white font-black text-xl leading-none p-1 rounded-lg hover:bg-slate-800 transition">
+            &times;
+        </button>
+    </div>
+
+    <!-- Search within Picker -->
+    <div class="p-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div class="relative">
+            <input type="text"
+                   id="pos-picker-search"
+                   name="q"
+                   value="{{ q or '' }}"
+                   placeholder="ابحث بالاسم، الموديل، أو الباركود..."
+                   hx-get="/pos/picker?mode={{ mode }}&scope_id={{ scope_id }}"
+                   hx-trigger="keyup changed delay:200ms"
+                   hx-target="#pos-picker-content"
+                   class="w-full pr-8 pl-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+            <span class="absolute right-2.5 top-2 text-slate-400 text-xs">🔍</span>
+            {% if q %}
+            <button type="button"
+                    hx-get="/pos/picker?mode={{ mode }}&scope_id={{ scope_id }}"
+                    hx-target="#pos-picker-content"
+                    class="absolute left-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs font-bold">
+                ✕
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Scrollable Grid of Product Cards -->
+    <div class="p-3 overflow-y-auto flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2.5 content-start">
+        {% for g in groups %}
+            {% if g.is_out_of_stock %}
+                <!-- Out of Stock Card (Disabled but retains position) -->
+                <div class="pos-picker-card is-disabled" title="الصنف غير متوفر حالياً">
+                    <div>
+                        <div class="text-xs font-black text-slate-500 line-clamp-2 leading-tight">
+                            {{ g.name }}
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-200 pt-1.5">
+                        <span class="text-[10px] font-black text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                            نفد
+                        </span>
+                        <span class="text-xs font-bold text-slate-400">
+                            {{ "%.2f"|format(g.price_min) }} {{ currency }}
+                        </span>
+                    </div>
+                </div>
+            {% elif g.is_unit_group %}
+                <!-- Unit Group Card (iPhone, etc. with individual units) -->
+                <div class="pos-picker-card hover:shadow-sm"
+                     hx-get="/pos/picker/group/{{ g.key_product_id }}"
+                     hx-target="#pos-picker-content"
+                     title="انقر لاختيار الجهاز برقم الـ IMEI">
+                    <div>
+                        <div class="flex items-center justify-between gap-1 mb-1">
+                            <span class="text-sm">{{ g.icon }}</span>
+                            <span class="text-[10px] font-black bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-full border border-amber-300">
+                                {{ g.units_available }} أجهزة
+                            </span>
+                        </div>
+                        <div class="text-xs font-black text-slate-900 dark:text-white line-clamp-2 leading-tight">
+                            {{ g.name }}
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-1.5">
+                        <span class="text-xs font-black text-blue-700 dark:text-blue-400">
+                            {{ "%.2f"|format(g.price_min) }} <span class="text-[10px] font-normal">{{ currency }}</span>
+                        </span>
+                        <span class="text-[11px] font-bold text-blue-600 hover:underline">
+                            اختر &larr;
+                        </span>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Regular Bulk Product Card (Click adds directly to cart) -->
+                <div class="pos-picker-card hover:shadow-sm"
+                     hx-post="/pos/add-product?product_id={{ g.key_product_id }}"
+                     hx-target="#cart-container"
+                     title="انقر للإضافة إلى السلة">
+                    <div>
+                        <div class="flex items-center justify-between gap-1 mb-1">
+                            <span class="text-sm">{{ g.icon }}</span>
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                {{ g.qty_available }} متوفر
+                            </span>
+                        </div>
+                        <div class="text-xs font-black text-slate-900 dark:text-white line-clamp-2 leading-tight">
+                            {{ g.name }}
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-1.5">
+                        <span class="text-xs font-black text-blue-700 dark:text-blue-400">
+                            {{ "%.2f"|format(g.price_min) }} <span class="text-[10px] font-normal">{{ currency }}</span>
+                        </span>
+                        <span class="text-base text-blue-600 font-bold leading-none">
+                            +
+                        </span>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="col-span-full py-12 text-center text-slate-400 font-bold text-xs">
+                لا توجد منتجات مطابقة في هذا التصنيف
+            </div>
+        {% endfor %}
+    </div>
+
+</div>

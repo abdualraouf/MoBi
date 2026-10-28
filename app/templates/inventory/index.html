@@ -1,62 +1,185 @@
 {% extends "base.html" %}
 
-{% block title %}إدارة المخزون وهواتف الـ IMEI | MoBi{% endblock %}
+{% block title %}إدارة المخزون والأصناف | MoBi{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="inventoryApp()">
-    
-    <!-- Top Stats & Actions -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <div>
-            <h1 class="text-xl font-black text-gray-800">📦 إدارة المنتجات والمخزون</h1>
-            <p class="text-xs text-gray-500 mt-0.5">تتبع الهواتف برقم الـ IMEI، الإكسسوارات بباركود العلبة، وقطع الغيار</p>
-        </div>
-        
-        <div class="flex items-center space-x-2 space-x-reverse w-full sm:w-auto">
-            <button @click="showAddProduct = true"
-                    class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition text-sm flex items-center justify-center space-x-1.5 space-x-reverse">
-                <span>➕</span>
-                <span>إضافة صنف جديد</span>
-            </button>
-            <a href="/inventory/barcode-labels"
-               class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-3 rounded-lg border border-gray-300 text-sm flex items-center space-x-1 space-x-reverse" title="طباعة ملصقات باركود">
-                <span>🏷️</span>
-                <span>طباعة باركود</span>
+<div class="space-y-6" x-data="{
+    showProductModal: false,
+    showStockModal: false,
+    showCreateTypeModal: false,
+    stockProductId: null,
+    stockProductName: '',
+    stockCurrentQty: 0,
+    openStockModal(id, name, qty) {
+        this.stockProductId = id;
+        this.stockProductName = name;
+        this.stockCurrentQty = qty;
+        this.showStockModal = true;
+    }
+}">
+
+    <!-- Top Navigation Tabs -->
+    <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 flex-wrap">
+            <a href="/inventory?tab=products"
+               class="px-4 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition {% if tab == 'products' %}bg-blue-600 text-white shadow-sm{% else %}bg-slate-50 text-slate-700 hover:bg-slate-100{% endif %}">
+                <span>📦</span>
+                <span>الأصناف والمنتجات</span>
             </a>
+
+            {% if current_user.role == 'admin' %}
+            <a href="/inventory?tab=types"
+               class="px-4 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition {% if tab == 'types' %}bg-blue-600 text-white shadow-sm{% else %}bg-slate-50 text-slate-700 hover:bg-slate-100{% endif %}">
+                <span>⚙️</span>
+                <span>أنواع المنتجات والخصائص</span>
+                <span class="text-xs px-2 py-0.5 rounded-full {% if tab == 'types' %}bg-blue-700 text-white{% else %}bg-slate-200 text-slate-800{% endif %}">
+                    {{ all_types|length }}
+                </span>
+            </a>
+
+            <a href="/inventory?tab=tags"
+               class="px-4 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 transition {% if tab == 'tags' %}bg-blue-600 text-white shadow-sm{% else %}bg-slate-50 text-slate-700 hover:bg-slate-100{% endif %}">
+                <span>🏷️</span>
+                <span>المجموعات والوسوم</span>
+                <span class="text-xs px-2 py-0.5 rounded-full {% if tab == 'tags' %}bg-blue-700 text-white{% else %}bg-slate-200 text-slate-800{% endif %}">
+                    {{ all_tags|length }}
+                </span>
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="flex items-center gap-2 mr-auto">
+            {% if tab == 'products' %}
+                {% if current_user.role == 'admin' %}
+                <button type="button"
+                        hx-get="/inventory/product/new"
+                        hx-target="#product-modal-container"
+                        @click="showProductModal = true"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm text-sm flex items-center gap-1.5 transition">
+                    <span>➕</span>
+                    <span>إضافة صنف جديد</span>
+                </button>
+                {% endif %}
+                <a href="/inventory/barcode-labels"
+                   class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-3.5 rounded-xl border border-slate-300 text-sm flex items-center gap-1.5 transition"
+                   title="طباعة ملصقات باركود">
+                    <span>🏷️</span>
+                    <span>طباعة باركود</span>
+                </a>
+            {% elif tab == 'types' and current_user.role == 'admin' %}
+                <button type="button"
+                        @click="showCreateTypeModal = true"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm text-sm flex items-center gap-1.5 transition">
+                    <span>➕</span>
+                    <span>إنشاء نوع جديد</span>
+                </button>
+            {% endif %}
         </div>
     </div>
 
+    <!-- Alert / Error Banner if any -->
+    {% if request.query_params.get('error') %}
+    <div class="bg-red-50 border-r-4 border-red-500 p-3.5 rounded-xl text-red-700 font-bold text-sm flex items-center gap-2">
+        <span>⚠️</span>
+        <span>{{ request.query_params.get('error') }}</span>
+    </div>
+    {% endif %}
+
+    <!-- ======================================================================= -->
+    <!-- TAB 1: PRODUCTS                                                         -->
+    <!-- ======================================================================= -->
+    {% if tab == 'products' %}
+
     <!-- Filter & Search Bar -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
-        <form method="GET" action="/inventory" class="flex-1 w-full flex items-center gap-2">
-            <div class="relative flex-1">
-                <input type="text" name="search" value="{{ search_query or '' }}"
-                       placeholder="ابحث بالاسم، الموديل، أو الباركود..."
-                       class="w-full pr-9 pl-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <span class="absolute right-3 top-2.5 text-gray-400 text-sm">🔍</span>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+        <form method="GET" action="/inventory" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+            <input type="hidden" name="tab" value="products">
+
+            <!-- Search Query -->
+            <div class="lg:col-span-2">
+                <label class="block text-xs font-black text-slate-700 mb-1">بحث شامل:</label>
+                <div class="relative">
+                    <input type="text" name="q" value="{{ q }}"
+                           placeholder="الاسم، الباركود، IMEI، أو أي خاصية..."
+                           class="w-full pr-9 pl-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="absolute right-3 top-2.5 text-slate-400 text-sm">🔍</span>
+                </div>
             </div>
 
-            <select name="type" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 rounded-lg py-2 px-3 text-sm font-semibold outline-none">
-                <option value="">جميع الأقسام</option>
-                <option value="phone" {% if type_filter == 'phone' %}selected{% endif %}>📱 هواتف ذكية (IMEI)</option>
-                <option value="accessory" {% if type_filter == 'accessory' %}selected{% endif %}>🔌 إكسسوارات ومستلزمات</option>
-                <option value="spare_part" {% if type_filter == 'spare_part' %}selected{% endif %}>🛠️ قطع غيار صيانة</option>
-            </select>
+            <!-- Scope -->
+            <div>
+                <label class="block text-xs font-black text-slate-700 mb-1">نطاق الاستخدام:</label>
+                <select name="scope" class="w-full p-2 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all" {% if scope == 'all' %}selected{% endif %}>جميع الأصناف</option>
+                    <option value="sellable" {% if scope == 'sellable' %}selected{% endif %}>🛒 معروض للبيع فقط</option>
+                    <option value="repairs" {% if scope == 'repairs' %}selected{% endif %}>🔧 مخصص للصيانة فقط</option>
+                    <option value="archived" {% if scope == 'archived' %}selected{% endif %}>🗄️ المؤرشفة فقط</option>
+                </select>
+            </div>
 
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700">بحث</button>
+            <!-- Type Filter -->
+            <div>
+                <label class="block text-xs font-black text-slate-700 mb-1">النوع / القسم:</label>
+                <select name="type_id" class="w-full p-2 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">كل الأنواع</option>
+                    {% for t in all_types %}
+                    <option value="{{ t.id }}" {% if type_id == t.id %}selected{% endif %}>{{ t.icon }} {{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Hide Out of Stock Checkbox -->
+            <div class="flex items-center pb-2">
+                <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
+                    <input type="checkbox" name="hide_out" value="true" {% if hide_out %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                    <span>إخفاء المنتهي من المخزون</span>
+                </label>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-xl text-sm font-black shadow-sm transition">
+                    فلترة
+                </button>
+                {% if q or scope != 'all' or type_id or hide_out or selected_tags %}
+                <a href="/inventory" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-3 rounded-xl text-xs font-bold border border-slate-300 transition" title="إعادة تعيين">
+                    ✖
+                </a>
+                {% endif %}
+            </div>
         </form>
+
+        <!-- Tags Filter Chips -->
+        {% if all_tags %}
+        <div class="border-t border-slate-100 pt-2 flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-slate-500">فلترة بالمجموعات:</span>
+            {% for tag in all_tags %}
+            {% set is_selected = tag.id in selected_tags %}
+            <a href="/inventory?tab=products&q={{ q }}&scope={{ scope }}{% if type_id %}&type_id={{ type_id }}{% endif %}&hide_out={{ 'true' if hide_out else '' }}{% for st in selected_tags %}{% if st != tag.id %}&tags={{ st }}{% endif %}{% endfor %}{% if not is_selected %}&tags={{ tag.id }}{% endif %}"
+               class="text-xs font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 {% if is_selected %}bg-blue-600 text-white border-blue-600 shadow-sm{% else %}bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100{% endif %}">
+                <span class="w-2 h-2 rounded-full" style="background-color: var(--tag-{{ tag.color }}, #3b82f6);"></span>
+                <span>{{ tag.name }}</span>
+                {% if is_selected %}<span class="text-[10px]">✕</span>{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
     <!-- Products Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-300 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">
                 <thead class="bg-slate-900 text-white text-xs uppercase font-bold border-b border-slate-950">
                     <tr>
-                        <th class="py-3.5 px-4">الصنف / الموديل</th>
-                        <th class="py-3.5 px-4">القسم</th>
-                        <th class="py-3.5 px-4">الباركود المصنعي</th>
-                        <th class="py-3.5 px-4 text-center">المخزون المتوفر</th>
+                        {% if current_user.role == 'admin' %}
+                        <th class="py-3 px-3 text-center w-14">الترتيب</th>
+                        {% endif %}
+                        <th class="py-3.5 px-4">الصنف والخصائص</th>
+                        <th class="py-3.5 px-4">النوع والوجهة</th>
+                        <th class="py-3.5 px-4">الباركود</th>
+                        <th class="py-3.5 px-4 text-center">المخزون</th>
                         <th class="py-3.5 px-4 text-center">سعر الشراء</th>
                         <th class="py-3.5 px-4 text-center">سعر البيع</th>
                         <th class="py-3.5 px-4 text-center">الإجراءات</th>
@@ -64,65 +187,182 @@
                 </thead>
                 <tbody class="divide-y divide-slate-200">
                     {% for p in products %}
-                    <tr class="hover:bg-blue-50/60 transition">
+                    <tr class="hover:bg-blue-50/60 transition {% if p.is_archived %}bg-slate-100 opacity-60{% endif %}">
+                        
+                        <!-- Order arrows (Admin) -->
+                        {% if current_user.role == 'admin' %}
+                        <td class="py-2 px-2 text-center whitespace-nowrap">
+                            <div class="inline-flex flex-col gap-0.5">
+                                <form method="POST" action="/inventory/product/{{ p.id }}/move?direction=up&return_url={{ request.url }}">
+                                    <button type="submit" class="p-0.5 text-slate-500 hover:text-blue-600 text-xs font-bold leading-none hover:bg-slate-200 rounded" title="تحريك لأعلى">▲</button>
+                                </form>
+                                <form method="POST" action="/inventory/product/{{ p.id }}/move?direction=down&return_url={{ request.url }}">
+                                    <button type="submit" class="p-0.5 text-slate-500 hover:text-blue-600 text-xs font-bold leading-none hover:bg-slate-200 rounded" title="تحريك لأسفل">▼</button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+
+                        <!-- Product Name & Attributes -->
                         <td class="py-3.5 px-4">
-                            <div class="font-black text-slate-900 text-base">{{ p.name }}</div>
-                            {% if p.brand or p.model %}
-                            <span class="text-xs text-slate-600 font-bold mt-0.5 block">{{ p.brand or '' }} {{ p.model or '' }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="py-3.5 px-4">
-                            {% if p.category.type == 'phone' %}
-                            <span class="bg-amber-100 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-400">
-                                📱 هاتف (IMEI)
-                            </span>
-                            {% elif p.category.type == 'spare_part' %}
-                            <span class="bg-purple-100 text-purple-950 text-xs font-bold px-2.5 py-1 rounded-full border border-purple-400">
-                                🛠️ قطعة صيانة
-                            </span>
-                            {% else %}
-                            <span class="bg-blue-100 text-blue-950 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-400">
-                                🔌 إكسسوار
-                            </span>
-                            {% endif %}
-                        </td>
-                        <td class="py-3.5 px-4 font-mono text-xs text-slate-800 font-bold">
-                            {{ p.barcode or '—' }}
-                        </td>
-                        <td class="py-3.5 px-4 text-center">
-                            {% if p.has_imei %}
-                            <span class="font-black text-sm {% if p.quantity > 0 %}text-emerald-700{% else %}text-red-700{% endif %}">
-                                {{ p.quantity }} أجهزة
-                            </span>
-                            {% else %}
-                            <span class="font-black text-sm {% if p.quantity <= p.alert_quantity %}text-red-700{% else %}text-slate-950{% endif %}">
-                                {{ p.quantity }} {{ p.unit }}
-                            </span>
-                            {% if p.quantity <= p.alert_quantity %}
-                            <span class="block text-[11px] text-red-700 font-black">⚠️ منخفض</span>
-                            {% endif %}
-                            {% endif %}
-                        </td>
-                        <td class="py-3.5 px-4 text-center font-bold text-slate-800">
-                            {{ "%.2f"|format(p.buy_price) }}
-                        </td>
-                        <td class="py-3.5 px-4 text-center font-black text-blue-700 text-base">
-                            {{ "%.2f"|format(p.sell_price) }} {{ currency }}
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <div class="flex items-center justify-center space-x-1.5 space-x-reverse">
-                                {% if p.has_imei %}
-                                <a href="/inventory/product/{{ p.id }}/imeis"
-                                   class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 px-3.5 rounded-xl shadow transition min-h-[40px] inline-flex items-center justify-center active:scale-95 touch-target">
-                                    🔢 أجهزة الـ IMEI
-                                </a>
-                                {% else %}
-                                <button type="button" @click="openEditStock({{ p.id }}, '{{ p.name }}', {{ p.quantity }})"
-                                        class="bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold py-2 px-3.5 rounded-xl border border-slate-300 transition min-h-[40px] inline-flex items-center justify-center active:scale-95 touch-target">
-                                    تعديل الكمية
-                                </button>
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-slate-900 text-base">{{ p.name }}</span>
+                                {% if p.is_archived %}
+                                <span class="text-[10px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded border border-red-300">مؤرشف</span>
                                 {% endif %}
                             </div>
+
+                            <!-- Tags -->
+                            {% if p.tags %}
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                {% for t in p.tags %}
+                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300">
+                                    {{ t.name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Dynamic Attributes Pills -->
+                            {% if p.display_attributes %}
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                {% for a in p.display_attributes %}
+                                <span class="text-[11px] px-2 py-0.5 rounded-md font-mono font-bold {% if a.is_unique %}bg-amber-100 text-amber-900 border border-amber-300{% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                                    <span class="text-slate-500 font-sans font-normal">{{ a.name }}:</span> {{ a.value }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Type & Destination Badges -->
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                                <span>{{ p.product_type.icon }}</span>
+                                <span>{{ p.product_type.name }}</span>
+                            </div>
+                            <div class="flex items-center gap-1 mt-1">
+                                {% if p.product_type.show_in_pos %}
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-300" title="معروض بنقطة البيع">🛒 بيع</span>
+                                {% endif %}
+                                {% if p.product_type.use_in_repairs %}
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-300" title="متاح للصيانة">🔧 صيانة</span>
+                                {% endif %}
+                                {% if p.is_unit %}
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-300" title="جهاز فردي برقم فريد">🔒 فردي</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Barcode -->
+                        <td class="py-3.5 px-4 font-mono text-xs text-slate-800 font-bold whitespace-nowrap">
+                            <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200 select-all">{{ p.barcode or '—' }}</span>
+                        </td>
+
+                        <!-- Stock Quantity -->
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                            {% if p.is_unit %}
+                                {% if p.quantity > 0 %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    ✓ متاح
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-red-100 text-red-800 border border-red-300">
+                                    ✕ مباع / غير متوفر
+                                </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="font-black text-sm {% if p.quantity <= p.alert_quantity %}text-red-700{% else %}text-slate-950{% endif %}">
+                                    {{ p.quantity }} {{ p.unit }}
+                                </span>
+                                {% if p.quantity <= p.alert_quantity %}
+                                <span class="block text-[11px] text-red-700 font-black">⚠️ منخفض</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+
+                        <!-- Buy Price (Admin only) -->
+                        <td class="py-3.5 px-4 text-center font-bold text-slate-800 whitespace-nowrap">
+                            {% if current_user.role == 'admin' %}
+                            {{ "%.2f"|format(p.buy_price) }}
+                            {% else %}
+                            <span class="text-slate-400 font-normal">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Sell Price -->
+                        <td class="py-3.5 px-4 text-center font-black text-blue-700 text-base whitespace-nowrap">
+                            {{ "%.2f"|format(p.sell_price) }} <span class="text-xs font-bold text-slate-600">{{ currency }}</span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1">
+                                {% if current_user.role == 'admin' %}
+                                    <!-- Edit Button -->
+                                    <button type="button"
+                                            hx-get="/inventory/product/{{ p.id }}/edit"
+                                            hx-target="#product-modal-container"
+                                            @click="showProductModal = true"
+                                            class="p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
+                                            title="تعديل الصنف">
+                                        ✏️
+                                    </button>
+
+                                    <!-- Duplicate Button -->
+                                    <button type="button"
+                                            hx-get="/inventory/product/{{ p.id }}/duplicate"
+                                            hx-target="#product-modal-container"
+                                            @click="showProductModal = true"
+                                            class="p-2 text-slate-600 hover:text-emerald-600 hover:bg-slate-100 rounded-lg transition"
+                                            title="نسخ الصنف">
+                                        ⧉
+                                    </button>
+
+                                    <!-- Quick Stock Edit (Only bulk products) -->
+                                    {% if not p.is_unit %}
+                                    <button type="button"
+                                            @click="openStockModal({{ p.id }}, '{{ p.name }}', {{ p.quantity }})"
+                                            class="p-2 text-slate-600 hover:text-amber-600 hover:bg-slate-100 rounded-lg transition"
+                                            title="تعديل الكمية">
+                                        🔢
+                                    </button>
+                                    {% endif %}
+                                {% endif %}
+
+                                <!-- Barcode Print Label -->
+                                <a href="/inventory/barcode-labels?product_id={{ p.id }}"
+                                   class="p-2 text-slate-600 hover:text-purple-600 hover:bg-slate-100 rounded-lg transition"
+                                   title="طباعة ملصق باركود">
+                                    🏷️
+                                </a>
+
+                                {% if current_user.role == 'admin' %}
+                                    <!-- Archive / Restore -->
+                                    {% if p.is_archived %}
+                                    <form method="POST" action="/inventory/product/{{ p.id }}/restore" class="inline">
+                                        <input type="hidden" name="return_url" value="{{ request.url }}">
+                                        <button type="submit" class="p-2 text-slate-600 hover:text-emerald-600 hover:bg-slate-100 rounded-lg transition" title="استعادة الصنف">
+                                            ♻️
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form method="POST" action="/inventory/product/{{ p.id }}/archive" class="inline" onsubmit="return confirm('هل تريد أرشفة هذا الصنف؟')">
+                                        <input type="hidden" name="return_url" value="{{ request.url }}">
+                                        <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-slate-100 rounded-lg transition" title="أرشفة الصنف">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="py-12 text-center text-slate-500 font-bold">
+                            <span class="text-4xl block mb-2">🔍</span>
+                            لا توجد منتجات مطابقة لخيارات البحث أو الفلتر الحالية.
                         </td>
                     </tr>
                     {% endfor %}
@@ -131,128 +371,332 @@
         </div>
     </div>
 
-    <!-- Modal: Add New Product -->
-    <div x-show="showAddProduct" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto" @click.away="showAddProduct = false">
-            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-                <h3 class="font-black text-lg text-slate-900">إضافة صنف جديد للمخزون</h3>
-                <button type="button" @click="showAddProduct = false" class="text-slate-400 hover:text-slate-600 font-bold text-2xl leading-none">&times;</button>
+    <!-- ======================================================================= -->
+    <!-- TAB 2: PRODUCT TYPES (Admin Only)                                       -->
+    <!-- ======================================================================= -->
+    {% elif tab == 'types' and current_user.role == 'admin' %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for t in all_types %}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between space-y-4 {% if t.is_archived %}opacity-60 bg-slate-50{% endif %}">
+            
+            <div>
+                <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl p-2 bg-slate-100 rounded-2xl">{{ t.icon }}</span>
+                        <div>
+                            <h3 class="font-black text-slate-900 text-lg">{{ t.name }}</h3>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                <span class="text-xs text-slate-500 font-bold">{{ t.attributes|length }} خصائص معرفة</span>
+                                <span class="text-slate-300">•</span>
+                                <span class="text-xs text-blue-700 font-bold">{{ t.products|length }} منتج</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Arrows -->
+                    <div class="inline-flex flex-col gap-0.5">
+                        <form method="POST" action="/inventory/types/{{ t.id }}/move?direction=up">
+                            <button type="submit" class="p-1 text-slate-500 hover:text-blue-600 text-xs font-bold leading-none hover:bg-slate-100 rounded" title="تحريك لأعلى">▲</button>
+                        </form>
+                        <form method="POST" action="/inventory/types/{{ t.id }}/move?direction=down">
+                            <button type="submit" class="p-1 text-slate-500 hover:text-blue-600 text-xs font-bold leading-none hover:bg-slate-100 rounded" title="تحريك لأسفل">▼</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                <div class="flex flex-wrap gap-1.5 mt-3">
+                    {% if t.show_in_pos %}
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300">
+                        🛒 معروض في نقطة البيع
+                    </span>
+                    {% else %}
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
+                        مخفي عن نقطة البيع
+                    </span>
+                    {% endif %}
+
+                    {% if t.use_in_repairs %}
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-300">
+                        🔧 متاح لقطع الصيانة
+                    </span>
+                    {% endif %}
+
+                    {% if t.has_unique_attribute %}
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300">
+                        🔒 جهاز فردي (IMEI/سيريال)
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Attributes list preview -->
+                {% if t.attributes %}
+                <div class="mt-3 pt-3 border-t border-slate-100">
+                    <span class="text-[11px] font-black text-slate-500 block mb-1">الخصائص المخصصة:</span>
+                    <div class="flex flex-wrap gap-1">
+                        {% for attr in t.attributes %}
+                        <span class="text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">
+                            {{ attr.name }}
+                            {% if attr.is_unique %}🔒{% endif %}
+                            {% if attr.show_on_receipt %}📄{% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
-            <form method="POST" action="/inventory/product/add" class="space-y-4">
+            <!-- Card Actions -->
+            <div class="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
+                <a href="/inventory/types/{{ t.id }}"
+                   class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-black py-2 px-3 rounded-xl text-xs text-center border border-blue-200 transition">
+                    ⚙️ إدارة الخصائص والحقول
+                </a>
+
+                {% if t.is_archived %}
+                <form method="POST" action="/inventory/types/{{ t.id }}/restore">
+                    <button type="submit" class="p-2 text-slate-600 hover:text-emerald-600 hover:bg-slate-100 rounded-lg text-xs font-bold" title="استعادة النوع">
+                        ♻️
+                    </button>
+                </form>
+                {% else %}
+                <form method="POST" action="/inventory/types/{{ t.id }}/archive">
+                    <button type="submit" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-100 rounded-lg text-xs font-bold" title="أرشفة النوع">
+                        🗄️
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if t.products|length == 0 %}
+                <form method="POST" action="/inventory/types/{{ t.id }}/delete" onsubmit="return confirm('هل أنت متأكد من حذف هذا النوع نهائياً؟')">
+                    <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-slate-100 rounded-lg text-xs font-bold" title="حذف نهائي">
+                        🗑️
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 3: TAGS / GROUPS (Admin Only)                                      -->
+    <!-- ======================================================================= -->
+    {% elif tab == 'tags' and current_user.role == 'admin' %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Add New Tag Form -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+            <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+                <span>➕</span>
+                <span>إضافة مجموعة / وسم جديد</span>
+            </h3>
+            
+            <form method="POST" action="/inventory/tags/create" class="space-y-3.5">
                 <div>
-                    <label class="block text-xs font-black text-slate-800 mb-1.5">القسم / التصنيف *</label>
-                    <select name="category_id" x-model="selectedCategoryType" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-slate-50 font-bold text-slate-900" required>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}" data-type="{{ cat.type }}">{{ cat.name }} ({{ cat.type }})</option>
+                    <label class="block text-xs font-black text-slate-800 mb-1">اسم المجموعة *</label>
+                    <input type="text" name="name" required placeholder="مثال: Apple، شواحن، أنكر..."
+                           class="w-full p-2.5 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-800 mb-1">اللون المميز</label>
+                    <select name="color" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for col in tag_colors %}
+                        <option value="{{ col }}">{{ col|capitalize }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-black text-slate-800 mb-1.5">اسم الصنف أو موديل الهاتف *</label>
-                    <input type="text" name="name" required placeholder="مثال: كفر حماية شفاف iPhone 14 Pro أو هاتف Samsung S23"
-                           class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="pt-1">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="show_on_shelf" value="1"
+                               class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                        <span class="text-xs font-bold text-slate-800">تثبيت على شريط الوصول السريع في الـ POS</span>
+                    </label>
                 </div>
 
-                <!-- Barcode input: allow scanner input for pre-printed boxes -->
-                <div>
-                    <label class="block text-xs font-black text-slate-800 mb-1.5">الباركود المصنعي المطبوع على العلبة (UPC/EAN)</label>
-                    <div class="relative">
-                        <input type="text" name="barcode" id="new-prod-barcode"
-                               placeholder="امسح باركود العلبة بالماسح الآن أو اتركه للتوليد التلقائي"
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-mono font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
-                        <button type="button" onclick="generateAutoBarcode()" class="absolute left-2 top-2 bg-slate-200 hover:bg-slate-300 text-xs px-2.5 py-1 rounded-md font-bold text-slate-800 transition">
-                            توليد كود
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1.5">الماركة (Brand)</label>
-                        <input type="text" name="brand" placeholder="Apple, Samsung, Anker..."
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1.5">الموديل (Model)</label>
-                        <input type="text" name="model" placeholder="موديل الجهاز أو القطعة"
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1.5">سعر الشراء (التكلفة) *</label>
-                        <input type="number" step="0.5" name="buy_price" required value="0"
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-800 mb-1.5">سعر البيع الافتراضي *</label>
-                        <input type="number" step="0.5" name="sell_price" required value="0"
-                               class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-black text-blue-600 text-center outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <!-- Quantity: For accessories & parts -->
-                <div class="p-3.5 bg-slate-100 rounded-xl border border-slate-300 space-y-1.5">
-                    <label class="block text-xs font-black text-slate-900">الكمية الأولية بالمخزون</label>
-                    <input type="number" name="quantity" value="1" min="0"
-                           class="w-full p-2.5 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-[11px] text-slate-600 font-bold">ملاحظة: إذا كان الصنف هاتفاً بـ IMEI، سيتم تسجيل كل جهاز بالرقم التسلسلي في الخطوة التالية.</p>
-                </div>
-
-                <div class="flex justify-end space-x-2 space-x-reverse pt-2">
-                    <button type="button" @click="showAddProduct = false" class="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg text-sm font-bold hover:bg-slate-300 transition">إلغاء</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow transition">حفظ الصنف</button>
-                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm shadow-sm transition">
+                    حفظ المجموعة
+                </button>
             </form>
+        </div>
+
+        <!-- Tags List -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-300 overflow-hidden">
+            <div class="p-4 border-b border-slate-200 bg-slate-50 font-black text-sm text-slate-800">
+                قائمة المجموعات الحالية ({{ all_tags|length }})
+            </div>
+
+            <div class="divide-y divide-slate-200">
+                {% for tag in all_tags %}
+                <div class="p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition">
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- Order arrows -->
+                        <div class="inline-flex flex-col gap-0.5">
+                            <form method="POST" action="/inventory/tags/{{ tag.id }}/move?direction=up">
+                                <button type="submit" class="p-0.5 text-slate-500 hover:text-blue-600 text-xs font-bold leading-none hover:bg-slate-200 rounded">▲</button>
+                            </form>
+                            <form method="POST" action="/inventory/tags/{{ tag.id }}/move?direction=down">
+                                <button type="submit" class="p-0.5 text-slate-500 hover:text-blue-600 text-xs font-bold leading-none hover:bg-slate-200 rounded">▼</button>
+                            </form>
+                        </div>
+
+                        <!-- Color Dot + Name -->
+                        <span class="w-3.5 h-3.5 rounded-full" style="background-color: var(--tag-{{ tag.color }}, #3b82f6);"></span>
+                        <div>
+                            <span class="font-black text-slate-900 text-sm">{{ tag.name }}</span>
+                            <span class="text-xs text-slate-500 block">مرتبطة بـ {{ tag.products|length }} منتج</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        {% if tag.show_on_shelf %}
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300">
+                            📌 مثبتة في شريط POS
+                        </span>
+                        {% endif %}
+
+                        <form method="POST" action="/inventory/tags/{{ tag.id }}/delete" onsubmit="return confirm('هل تريد حذف هذه المجموعة؟ لن تُحذف المنتجات المرتبطة بها.')">
+                            <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-slate-100 rounded-lg text-sm font-bold transition" title="حذف المجموعة">
+                                🗑️
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-slate-500 font-bold text-sm">
+                    لا توجد مجموعات معرفة حتى الآن. أضف أول مجموعة من النموذج المقابل.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    {% endif %}
+
+    <!-- ======================================================================= -->
+    <!-- MODALS CONTAINER                                                        -->
+    <!-- ======================================================================= -->
+
+    <!-- Product Form Modal Container (HTMX Loads Content Here) -->
+    <div x-show="showProductModal"
+         class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+         style="display: none;"
+         @keydown.escape.window="showProductModal = false">
+        <div id="product-modal-container" @click.away="showProductModal = false">
+            <!-- Content loaded via HTMX: _product_form.html -->
         </div>
     </div>
 
-    <!-- Modal: Quick Update Stock -->
-    <div x-show="showEditStock" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4" @click.away="showEditStock = false">
-            <h3 class="font-black text-base text-slate-900" x-text="'تعديل كمية: ' + editName"></h3>
+    <!-- Quick Stock Edit Modal -->
+    <div x-show="showStockModal"
+         class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+         style="display: none;"
+         @keydown.escape.window="showStockModal = false">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4" @click.away="showStockModal = false" dir="rtl">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-black text-base text-slate-900">تعديل المخزون</h3>
+                <button type="button" @click="showStockModal = false" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+            </div>
+
             <form method="POST" action="/inventory/product/update-stock" class="space-y-3">
-                <input type="hidden" name="product_id" :value="editId">
+                <input type="hidden" name="product_id" :value="stockProductId">
+                <input type="hidden" name="return_url" value="{{ request.url }}">
+
                 <div>
-                    <label class="block text-xs font-black text-slate-800 mb-1.5">الكمية الحالية الجديدة:</label>
-                    <input type="number" name="new_quantity" :value="editQty" min="0" required
-                           class="w-full p-2.5 border border-slate-300 rounded-lg text-base font-black text-slate-900 text-center outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">الصنف:</label>
+                    <div class="p-2 bg-slate-100 rounded-lg text-sm font-black text-slate-900" x-text="stockProductName"></div>
                 </div>
-                <div class="flex justify-end space-x-2 space-x-reverse pt-2">
-                    <button type="button" @click="showEditStock = false" class="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg text-sm font-bold hover:bg-slate-300 transition">إلغاء</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow transition">تحديث</button>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-800 mb-1">الكمية الجديدة بالمخزون *</label>
+                    <input type="number" name="new_quantity" :value="stockCurrentQty" min="0" required
+                           class="w-full p-2.5 border border-slate-300 rounded-xl text-base font-black text-center text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" @click="showStockModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl shadow-sm transition">
+                        حفظ الكمية
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Create Type Modal -->
+    {% if current_user.role == 'admin' %}
+    <div x-show="showCreateTypeModal"
+         class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+         style="display: none;"
+         @keydown.escape.window="showCreateTypeModal = false">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4" @click.away="showCreateTypeModal = false" dir="rtl">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-black text-base text-slate-900 flex items-center gap-2">
+                    <span>✨</span>
+                    <span>إنشاء نوع منتج جديد</span>
+                </h3>
+                <button type="button" @click="showCreateTypeModal = false" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+            </div>
+
+            <form method="POST" action="/inventory/types/create" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-black text-slate-800 mb-1">اسم النوع *</label>
+                    <input type="text" name="name" required placeholder="مثال: شواحن، ساعات ذكية، كفرات..."
+                           class="w-full p-2.5 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-800 mb-1">الأيقونة (Emoji)</label>
+                    <input type="text" name="icon" value="📦" maxlength="4"
+                           class="w-20 p-2 border border-slate-300 rounded-xl text-center text-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="space-y-2 pt-1 border-t border-slate-100">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="show_in_pos" value="1" checked
+                               class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                        <span class="text-xs font-bold text-slate-800">عرض في شريط تصنيفات نقطة البيع (POS)</span>
+                    </label>
+
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="use_in_repairs" value="1"
+                               class="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500">
+                        <span class="text-xs font-bold text-slate-800">متاح للاستخدام كقطع غيار في ورشة الصيانة</span>
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="showCreateTypeModal = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl shadow-sm transition">
+                        متابعة وإنشاء الخصائص &larr;
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 
 <script>
-function inventoryApp() {
-    return {
-        showAddProduct: false,
-        showEditStock: false,
-        selectedCategoryType: '',
-        editId: null,
-        editName: '',
-        editQty: 0,
-
-        openEditStock(id, name, qty) {
-            this.editId = id;
-            this.editName = name;
-            this.editQty = qty;
-            this.showEditStock = true;
-        }
+function generateRandomFormBarcode() {
+    const input = document.getElementById("form-prod-barcode");
+    if (input) {
+        const rand = Math.floor(100000 + Math.random() * 900000);
+        input.value = "MB" + rand;
     }
-}
-
-function generateAutoBarcode() {
-    const randomCode = 'MOBI' + Math.floor(10000000 + Math.random() * 90000000);
-    document.getElementById('new-prod-barcode').value = randomCode;
 }
 </script>
 {% endblock %}

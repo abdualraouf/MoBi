@@ -37,5 +37,6 @@ SESSION_COOKIE_NAME = "mobi_session"
 APP_NAME = "MoBi"
 APP_TITLE = "MoBi | نظام إدارة محلات الهواتف ونقاط البيع والصيانة"
 VERSION = "1.0.0"
+SCHEMA_VERSION = 2
 HOST = "127.0.0.1"
 PORT = 8000

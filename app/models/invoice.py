@@ -1,5 +1,6 @@
+import json
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -23,7 +24,6 @@ class Invoice(Base):
     customer = relationship("Customer", back_populates="invoices")
     cashier = relationship("User", back_populates="invoices")
     items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
-    sold_items = relationship("ProductItem", back_populates="invoice")
 
     def __repr__(self):
         return f"<Invoice {self.invoice_number} - Total: {self.total_amount}>"
@@ -35,9 +35,8 @@ class InvoiceItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    product_item_id = Column(Integer, ForeignKey("product_items.id"), nullable=True)
     product_name = Column(String(150), nullable=False)  # Snapshot
-    imei = Column(String(50), nullable=True)  # Snapshot for thermal receipt
+    attributes_snapshot = Column(Text, nullable=True)  # JSON [{"name": str, "value": str}]
     quantity = Column(Integer, default=1, nullable=False)
     buy_price = Column(Float, default=0.0, nullable=False)  # Profit calculation
     unit_price = Column(Float, default=0.0, nullable=False)
@@ -46,7 +45,13 @@ class InvoiceItem(Base):
     # Relationships
     invoice = relationship("Invoice", back_populates="items")
     product = relationship("Product", back_populates="invoice_items")
-    product_item = relationship("ProductItem")
+
+    @property
+    def snapshot_list(self) -> list[dict]:
+        try:
+            return json.loads(self.attributes_snapshot) if self.attributes_snapshot else []
+        except (ValueError, TypeError):
+            return []
 
     def __repr__(self):
         return f"<InvoiceItem {self.product_name} x{self.quantity}>"

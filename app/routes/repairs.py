@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.repair import RepairTicket, RepairPart
 from app.models.customer import Customer
 from app.models.product import Product
-from app.models.category import Category
+from app.models.product_type import ProductType
 from app.models.settings import ShopSettings
 from app.models.user import User
 from app.routes.auth import require_user
@@ -125,12 +125,13 @@ def view_ticket(
     if not ticket:
         raise HTTPException(status_code=404, detail="تذكرة الصيانة غير موجودة")
 
-    # Available spare parts from inventory
-    available_parts = db.query(Product).join(Category).filter(
-        Category.type == "spare_part",
+    # Available spare parts from inventory (types where use_in_repairs is True)
+    available_parts = db.query(Product).join(ProductType).filter(
+        ProductType.use_in_repairs == True,
         Product.quantity > 0,
-        Product.is_active == True
-    ).all()
+        Product.is_active == True,
+        Product.is_archived == False
+    ).order_by(Product.name.asc()).all()
 
     settings = db.query(ShopSettings).first()
 
@@ -155,6 +156,9 @@ def add_spare_part_to_ticket(
 
     if not ticket or not product:
         raise HTTPException(status_code=404, detail="البيانات غير موجودة")
+
+    if not product.product_type or not product.product_type.use_in_repairs:
+        raise HTTPException(status_code=400, detail="هذا الصنف غير مخصص للاستخدام كقطع غيار")
 
     qty = max(1, min(quantity, product.quantity))
     

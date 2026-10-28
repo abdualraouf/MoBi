@@ -29,6 +29,14 @@ def require_user(request: Request, db: Session = Depends(get_db)) -> User:
         raise RedirectException(url="/auth/login")
     return user
 
+def require_admin(request: Request, db: Session = Depends(get_db)) -> User:
+    """Dependency that ensures current user is authenticated AND has role 'admin'."""
+    user = require_user(request, db)
+    if user.role != "admin":
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="هذه العملية مخصصة لمدير النظام فقط")
+    return user
+
 class RedirectException(Exception):
     def __init__(self, url: str):
         self.url = url

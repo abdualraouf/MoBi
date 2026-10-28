@@ -102,7 +102,12 @@ document.addEventListener("keydown", function (e) {
 
     // If focused on an ordinary textarea or text input other than barcode input, don't capture unless scanner speed
     const activeEl = document.activeElement;
-    const isFormInput = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+    const isOtherInput = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA") && activeEl !== barcodeInput;
+
+    if (isOtherInput && !isScannerSpeed) {
+        // User is typing in another input (e.g. pos-picker-search); let native event proceed
+        return;
+    }
 
     if (e.key === "Enter") {
         if (barcodeBuffer.length >= 3) {

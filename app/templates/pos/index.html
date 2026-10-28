@@ -39,8 +39,23 @@
     <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-2.5">
         
         <!-- Right Column / Checkout & Payment Panel (lg:col-span-5 xl:col-span-4) -->
-        <div class="order-2 lg:order-1 lg:col-span-5 xl:col-span-4 flex flex-col h-full min-h-0 bg-white p-3 rounded-xl shadow-sm border border-slate-300 justify-between overflow-hidden">
+        <div class="relative order-2 lg:order-1 lg:col-span-5 xl:col-span-4 flex flex-col h-full min-h-0 bg-white p-3 rounded-xl shadow-sm border border-slate-300 justify-between overflow-hidden">
             
+            <!-- Category Product Picker Overlay (Only covers the checkout panel, leaves cart fully visible) -->
+            <div x-show="pickerOpen"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 scale-98"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-98"
+                 class="pos-picker-overlay"
+                 style="display: none;">
+                <div id="pos-picker-content" class="h-full flex flex-col">
+                    <!-- Loaded dynamically via HTMX from /pos/picker -->
+                </div>
+            </div>
+
             <!-- Customer Selection -->
             <div>
                 <label class="block text-xs font-black text-slate-900 mb-1">العميل:</label>
@@ -158,53 +173,83 @@
 
     </div>
 
-    <!-- Fixed Bottom Quick Products Shelf (Docked at bottom of POS viewport) -->
+    <!-- Dynamic Quick Shelf (Categories / Tags Picker Shelf) -->
     <div class="flex-shrink-0 bg-white border border-slate-300 rounded-xl shadow-sm overflow-hidden no-print">
-        <!-- Control Header Bar -->
-        <div class="flex items-center justify-between px-3 py-1 bg-slate-100 border-b border-slate-200">
-            <div class="flex items-center space-x-2 space-x-reverse text-xs font-black text-slate-900">
-                <span class="text-sm leading-none">⚡</span>
-                <span>الأصناف السريعة والمخزون المتوفر</span>
-                <span class="bg-blue-100 text-blue-900 px-2 py-0.5 rounded-full text-xs font-bold border border-blue-200">
-                    {{ quick_products|length }} صنف
-                </span>
+        <!-- Control Header Bar with Mode Toggle -->
+        <div class="flex items-center justify-between px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-slate-800">تصفح البضاعة:</span>
+                
+                <!-- Toggle [ الأنواع | المجموعات ] -->
+                <div class="inline-flex bg-slate-200 p-0.5 rounded-lg border border-slate-300">
+                    <button type="button"
+                            id="shelf-mode-types"
+                            @click="shelfMode = 'types'"
+                            :class="shelfMode === 'types' ? 'bg-white text-blue-700 shadow-sm font-black' : 'text-slate-600 font-bold hover:text-slate-900'"
+                            class="px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1">
+                        <span>📦</span>
+                        <span>الأنواع ({{ shelf_types|length }})</span>
+                    </button>
+                    <button type="button"
+                            id="shelf-mode-tags"
+                            @click="shelfMode = 'tags'"
+                            :class="shelfMode === 'tags' ? 'bg-white text-blue-700 shadow-sm font-black' : 'text-slate-600 font-bold hover:text-slate-900'"
+                            class="px-2.5 py-1 text-xs rounded-md transition flex items-center gap-1">
+                        <span>🏷️</span>
+                        <span>المجموعات ({{ shelf_tags|length }})</span>
+                    </button>
+                </div>
             </div>
             
-            <!-- Navigation scroll arrows -->
-            <div class="flex items-center space-x-1 space-x-reverse">
-                <button type="button" @click="scrollQuickBar(1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليمين">▶</button>
-                <button type="button" @click="scrollQuickBar(-1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليسار">◀</button>
+            <div class="flex items-center gap-2">
+                <span class="text-[11px] text-slate-500 font-semibold" x-show="pickerOpen">
+                    نافذة التصفح مفتوحة &larr;
+                </span>
+                <!-- Navigation scroll arrows -->
+                <div class="flex items-center space-x-1 space-x-reverse">
+                    <button type="button" @click="scrollQuickBar(1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليمين">▶</button>
+                    <button type="button" @click="scrollQuickBar(-1)" class="w-7 h-7 bg-white hover:bg-slate-200 border border-slate-300 rounded flex items-center justify-center text-xs font-bold text-slate-800 shadow-sm transition active:scale-95" title="تمرير لليسار">◀</button>
+                </div>
             </div>
         </div>
 
-        <!-- Horizontal Touch & Wheel Scrollable Strip -->
+        <!-- Horizontal Scrollable Shelf Chips -->
         <div id="quick-products-strip"
              @wheel.prevent="$el.scrollLeft += $event.deltaY"
-             class="overflow-x-auto flex items-center gap-2.5 py-2 px-3 scrollbar-thin select-none touch-pan-x scroll-smooth">
-            {% for prod in quick_products %}
-            <div onclick="handleScannedBarcode('{{ prod.barcode or prod.id }}')"
-                 class="pos-quick-card bg-white hover:bg-blue-50 border-2 border-slate-300 hover:border-blue-600 rounded-xl cursor-pointer transition shadow-sm hover:shadow group active:scale-95 touch-target select-none"
-                 title="{{ prod.name }}">
-                <div class="card-icon">
-                    {% if prod.has_imei %}📱{% elif 'شاحن' in prod.name or 'كيبل' in prod.name %}🔌{% elif 'شاشة' in prod.name %}🛠️{% else %}📦{% endif %}
+             class="overflow-x-auto flex items-center gap-2 py-2 px-3 scrollbar-thin select-none touch-pan-x scroll-smooth">
+            
+            <!-- When Types Mode is Active -->
+            <template x-if="shelfMode === 'types'">
+                <div class="flex items-center gap-2">
+                    {% for pt in shelf_types %}
+                    <button type="button"
+                            @click="openPicker('type', {{ pt.id }})"
+                            :class="pickerOpen && pickerMode === 'type' && pickerScopeId === {{ pt.id }} ? 'pos-shelf-chip is-active' : 'pos-shelf-chip'">
+                        <span>{{ pt.icon }}</span>
+                        <span>{{ pt.name }}</span>
+                    </button>
+                    {% else %}
+                    <span class="text-xs text-slate-400 font-bold p-1">لا توجد أنواع معروضة في نقطة البيع</span>
+                    {% endfor %}
                 </div>
-                <div class="card-title font-bold text-slate-900 group-hover:text-blue-700">
-                    {{ prod.name }}
+            </template>
+
+            <!-- When Tags Mode is Active -->
+            <template x-if="shelfMode === 'tags'">
+                <div class="flex items-center gap-2">
+                    {% for tag in shelf_tags %}
+                    <button type="button"
+                            @click="openPicker('tag', {{ tag.id }})"
+                            :class="pickerOpen && pickerMode === 'tag' && pickerScopeId === {{ tag.id }} ? 'pos-shelf-chip is-active' : 'pos-shelf-chip'">
+                        <span class="w-2.5 h-2.5 rounded-full" style="background-color: var(--tag-{{ tag.color }}, #3b82f6);"></span>
+                        <span>{{ tag.name }}</span>
+                    </button>
+                    {% else %}
+                    <span class="text-xs text-slate-400 font-bold p-1">لا توجد مجموعات مثبتة في شريط الوصول السريع</span>
+                    {% endfor %}
                 </div>
-                <div class="card-price">
-                    {{ "%.2f"|format(prod.sell_price) }} {{ currency }}
-                </div>
-                {% if prod.has_imei %}
-                <span class="card-badge bg-amber-100 text-amber-950 border border-amber-400">
-                    يتطلب IMEI
-                </span>
-                {% else %}
-                <span class="card-badge bg-slate-100 text-slate-700 border border-slate-300">
-                    متوفر: {{ prod.quantity }}
-                </span>
-                {% endif %}
-            </div>
-            {% endfor %}
+            </template>
+
         </div>
     </div>
 
@@ -241,12 +286,30 @@ function posApp() {
         paidAmount: 0,
         paymentMethod: 'cash',
         showAddCustomer: false,
-        showQuickBar: true,
+        shelfMode: 'types', // 'types' | 'tags'
+        pickerOpen: false,
+        pickerMode: 'type',
+        pickerScopeId: null,
+
+        openPicker(mode, scopeId) {
+            if (this.pickerOpen && this.pickerMode === mode && this.pickerScopeId === scopeId) {
+                this.closePicker();
+                return;
+            }
+            this.pickerOpen = true;
+            this.pickerMode = mode;
+            this.pickerScopeId = scopeId;
+            htmx.ajax('GET', `/pos/picker?mode=${mode}&scope_id=${scopeId}`, '#pos-picker-content');
+        },
+
+        closePicker() {
+            this.pickerOpen = false;
+            this.pickerScopeId = null;
+        },
 
         scrollQuickBar(direction) {
             const el = document.getElementById("quick-products-strip");
             if (el) {
-                // Smooth scroll horizontally by 240px
                 el.scrollBy({ left: direction * 240, behavior: "smooth" });
             }
         },
@@ -265,7 +328,7 @@ function posApp() {
         },
 
         recalc() {
-            // Recalculates dynamically
+            // Dynamic recalculation
         },
 
         init() {

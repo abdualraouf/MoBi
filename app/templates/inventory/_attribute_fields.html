@@ -1,0 +1,65 @@
+<!-- Dynamic Attribute Fields Partial -->
+{% set pt = product_type if product_type is defined and product_type else selected_type %}
+<div id="attribute-fields" class="space-y-3 pt-2">
+    {% if pt and pt.attributes %}
+        <div class="border-t border-slate-200 pt-3">
+            <h4 class="text-xs font-black text-slate-900 mb-2.5 flex items-center gap-1.5">
+                <span>⚡</span>
+                <span>خصائص نوع ({{ pt.name }})</span>
+            </h4>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {% for attr in pt.attributes %}
+                <div class="space-y-1">
+                    <label for="attr-field-{{ attr.id }}" class="block text-xs font-bold text-slate-800">
+                        {{ attr.name }}
+                        {% if attr.is_required %}<span class="text-red-600 font-black">*</span>{% endif %}
+                        {% if attr.is_unique %}<span class="text-amber-700 font-normal text-[10px] bg-amber-100 px-1 py-0.5 rounded border border-amber-300 mr-1" title="قيمة فريدة لكل جهاز لا تتكرر">🔒 فريد</span>{% endif %}
+                        {% if attr.show_on_receipt %}<span class="text-blue-700 font-normal text-[10px] bg-blue-50 px-1 py-0.5 rounded border border-blue-200 mr-1" title="يظهر في الفاتورة المطبوعة">📄 فاتورة</span>{% endif %}
+                    </label>
+
+                    {% set current_val = attr_values.get(attr.id, '') if attr_values else '' %}
+
+                    {% if attr.field_kind == 'select' %}
+                        <select name="attr_{{ attr.id }}" id="attr-field-{{ attr.id }}"
+                                class="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 {% if field_errors and field_errors.get(attr.id) %}border-red-500 bg-red-50{% endif %}"
+                                {% if attr.is_required %}required{% endif %}>
+                            <option value="">-- اختر --</option>
+                            {% for opt in attr.options_list %}
+                            <option value="{{ opt }}" {% if current_val == opt %}selected{% endif %}>{{ opt }}</option>
+                            {% endfor %}
+                        </select>
+
+                    {% elif attr.field_kind == 'number' %}
+                        <input type="number" step="any" name="attr_{{ attr.id }}" id="attr-field-{{ attr.id }}"
+                               value="{{ current_val }}"
+                               placeholder="أدخل رقم..."
+                               class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 {% if field_errors and field_errors.get(attr.id) %}border-red-500 bg-red-50{% endif %}"
+                               {% if attr.is_required %}required{% endif %}>
+
+                    {% elif attr.field_kind == 'boolean' %}
+                        <label class="inline-flex items-center gap-2 cursor-pointer pt-1">
+                            <input type="checkbox" name="attr_{{ attr.id }}" id="attr-field-{{ attr.id }}" value="1"
+                                   {% if current_val in ('1', 'true', 'on') %}checked{% endif %}
+                                   class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span class="text-xs font-bold text-slate-700">تفعيل / نعم</span>
+                        </label>
+
+                    {% else %}
+                        <!-- text -->
+                        <input type="text" name="attr_{{ attr.id }}" id="attr-field-{{ attr.id }}"
+                               value="{{ current_val }}"
+                               placeholder="أدخل {{ attr.name }}..."
+                               class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 {% if field_errors and field_errors.get(attr.id) %}border-red-500 bg-red-50{% endif %}"
+                               {% if attr.is_required %}required{% endif %}>
+                    {% endif %}
+
+                    {% if field_errors and field_errors.get(attr.id) %}
+                    <p class="text-[11px] text-red-600 font-bold mt-0.5">{{ field_errors.get(attr.id) }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
