@@ -24,7 +24,7 @@ def view_reports(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="هذه الشاشة مخصصة لمدير النظام فقط")
 
-    now = datetime.utcnow()
+    now = datetime.now()
     query_invoices = db.query(Invoice)
     query_repairs = db.query(RepairTicket)
 
@@ -45,26 +45,31 @@ def view_reports(
     repairs = query_repairs.all()
 
     total_sales = sum(inv.total_amount for inv in invoices)
-    cash_collected = sum(inv.paid_amount for inv in invoices if inv.payment_method == "cash")
+    sales_cash = sum(inv.paid_amount for inv in invoices if inv.payment_method == "cash")
     
     # Calculate profit from invoice items: (unit_price - buy_price) * quantity
     invoice_ids = [inv.id for inv in invoices]
-    net_profit = 0.0
+    sales_profit = 0.0
     if invoice_ids:
         items = db.query(InvoiceItem).filter(InvoiceItem.invoice_id.in_(invoice_ids)).all()
-        net_profit = sum((item.unit_price - item.buy_price) * item.quantity for item in items)
+        sales_profit = sum((item.unit_price - item.buy_price) * item.quantity for item in items)
         # Minus overall invoice discounts
         total_discounts = sum(inv.discount for inv in invoices)
-        net_profit = max(0.0, net_profit - total_discounts)
+        sales_profit = max(0.0, sales_profit - total_discounts)
 
     repair_revenue = sum(rep.paid_amount for rep in repairs)
-    if period == "today":
-        cash_collected += sum(rep.paid_amount for rep in repairs)
+    repair_parts_cost = sum(part.cost_price for rep in repairs for part in rep.parts)
+    repair_profit = max(0.0, repair_revenue - repair_parts_cost)
+
+    net_profit = round(sales_profit + repair_profit, 2)
+    cash_collected = round(sales_cash + repair_revenue, 2)
 
     stats = {
-        "total_sales": total_sales,
+        "total_sales": round(total_sales, 2),
+        "sales_profit": round(sales_profit, 2),
+        "repair_profit": round(repair_profit, 2),
         "net_profit": net_profit,
-        "repair_revenue": repair_revenue,
+        "repair_revenue": round(repair_revenue, 2),
         "cash_collected": cash_collected,
         "invoices_count": len(invoices),
         "repairs_count": len(repairs)

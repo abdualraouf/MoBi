@@ -31,25 +31,33 @@ def next_sort_order(db: Session, model, **filters) -> int:
 def move(db: Session, model, obj_id: int, direction: int, **scope_filters):
     """
     Swap sort_order with adjacent item in same model scope.
+    Normalizes tied sort_order values first so up/down arrows always work reliably.
     direction: -1 for move up (smaller sort_order), +1 for move down (larger sort_order).
     """
-    obj = db.query(model).filter(model.id == obj_id).first()
-    if not obj:
-        return
-
     query = db.query(model)
     for k, v in scope_filters.items():
         query = query.filter(getattr(model, k) == v)
 
-    if direction < 0:
-        # Move up: find the nearest item with smaller sort_order
-        neighbour = query.filter(model.sort_order < obj.sort_order).order_by(model.sort_order.desc()).first()
-    else:
-        # Move down: find the nearest item with larger sort_order
-        neighbour = query.filter(model.sort_order > obj.sort_order).order_by(model.sort_order.asc()).first()
+    items = query.order_by(model.sort_order.asc(), model.id.asc()).all()
+    if len(items) < 2:
+        return
 
-    if neighbour:
-        obj.sort_order, neighbour.sort_order = neighbour.sort_order, obj.sort_order
+    # Ensure strictly distinct sequential sort_orders (10, 20, 30, ...)
+    target_idx = None
+    for idx, item in enumerate(items):
+        item.sort_order = (idx + 1) * 10
+        if item.id == obj_id:
+            target_idx = idx
+
+    if target_idx is None:
+        return
+
+    neighbour_idx = target_idx - 1 if direction < 0 else target_idx + 1
+    if 0 <= neighbour_idx < len(items):
+        items[target_idx].sort_order, items[neighbour_idx].sort_order = (
+            items[neighbour_idx].sort_order,
+            items[target_idx].sort_order,
+        )
         db.commit()
 
 
@@ -586,6 +594,8 @@ def move_products(db: Session, from_type_id: int, to_type_id: int) -> dict:
                     ))
 
         prod.type_id = to_type_id
+        if to_pt.has_unique_attribute and prod.quantity > 1:
+            prod.quantity = 1
 
     db.commit()
     return preview

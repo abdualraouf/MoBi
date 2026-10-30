@@ -37,6 +37,22 @@ def require_admin(request: Request, db: Session = Depends(get_db)) -> User:
         raise HTTPException(status_code=403, detail="هذه العملية مخصصة لمدير النظام فقط")
     return user
 
+def require_pos_access(request: Request, db: Session = Depends(get_db)) -> User:
+    """Dependency that ensures user is admin or cashier (blocks technician from POS/Customers)."""
+    user = require_user(request, db)
+    if user.role not in ("admin", "cashier"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="هذه الشاشة مخصصة للكاشير ومدير النظام فقط")
+    return user
+
+def require_repairs_tech(request: Request, db: Session = Depends(get_db)) -> User:
+    """Dependency for technical workshop actions (consuming spare parts, technical updates)."""
+    user = require_user(request, db)
+    if user.role not in ("admin", "technician"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="هذه العملية مخصصة لفني الصيانة ومدير النظام فقط")
+    return user
+
 class RedirectException(Exception):
     def __init__(self, url: str):
         self.url = url
@@ -45,7 +61,8 @@ class RedirectException(Exception):
 def login_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if user:
-        return RedirectResponse(url="/pos", status_code=302)
+        target = "/pos" if user.role in ("admin", "cashier") else "/repairs"
+        return RedirectResponse(url=target, status_code=302)
     settings = db.query(ShopSettings).first()
     return templates.TemplateResponse(request=request, name="auth/login.html", context={
         "shop_settings": settings,

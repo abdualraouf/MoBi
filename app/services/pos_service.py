@@ -197,6 +197,31 @@ def calculate_cart_totals(user_id: int, discount: float = 0.0) -> dict:
         "total": round(total, 2)
     }
 
+def _next_invoice_number(db: Session) -> str:
+    """Generate a collision-free sequential invoice number for today (local time)."""
+    date_str = datetime.now().strftime("%Y%m%d")
+    prefix = f"INV-{date_str}-"
+    existing_numbers = [
+        r[0] for r in db.query(Invoice.invoice_number)
+        .filter(Invoice.invoice_number.like(f"{prefix}%"))
+        .all()
+    ]
+    max_seq = 0
+    for num in existing_numbers:
+        try:
+            seq_part = int(num.split("-")[-1])
+            if seq_part > max_seq:
+                max_seq = seq_part
+        except ValueError:
+            pass
+    next_seq = max_seq + 1
+    while True:
+        candidate = f"{prefix}{next_seq:04d}"
+        if not db.query(Invoice.id).filter(Invoice.invoice_number == candidate).first():
+            return candidate
+        next_seq += 1
+
+
 def process_checkout(
     db: Session,
     user: User,
@@ -211,9 +236,24 @@ def process_checkout(
         return None, "سلة المبيعات فارغة"
 
     totals = calculate_cart_totals(user.id, discount)
-    paid_amount = float(paid_amount)
+    paid_amount = max(0.0, float(paid_amount))
     total_amount = totals["total"]
-    remaining = max(0.0, total_amount - paid_amount)
+
+    # Enforce min_sell_price floor for non-admin cashiers
+    if user.role != "admin" and totals["discount"] > 0:
+        min_allowed_total = round(sum(float(item.get("min_price", 0.0)) * item["quantity"] for item in cart), 2)
+        if total_amount < min_allowed_total:
+            max_allowed_discount = max(0.0, round(totals["subtotal"] - min_allowed_total, 2))
+            return None, f"عذراً، الخصم المدخل يتجاوز الحد المسموح به للأصناف (أقصى خصم مسموح: {max_allowed_discount:.2f})"
+
+    # If payment method is explicitly debt and paid_amount equals total without intentional partial entry, treat as 0 paid
+    remaining = round(max(0.0, total_amount - paid_amount), 2)
+
+    # Prevent recording debt against anonymous walk-in customer or missing customer
+    customer = db.query(Customer).filter(Customer.id == customer_id).first() if customer_id else None
+    if remaining > 0 or payment_method == "debt":
+        if not customer or customer.phone == "0000000000":
+            return None, "لا يمكن تسجيل فاتورة آجلة أو متبقي ذمة على (زبون نقدي عام). يرجى اختيار أو إضافة عميل أولاً."
 
     # Validate stock before processing
     for item in cart:
@@ -222,20 +262,20 @@ def process_checkout(
             prod_name = prod.name if prod else item["name"]
             return None, f"عذراً، المخزون المتوفر من ({prod_name}) غير كافٍ لإتمام الفاتورة"
 
-    # Generate unique invoice number: INV-YYYYMMDD-XXXX
-    date_str = datetime.utcnow().strftime("%Y%m%d")
-    today_count = db.query(Invoice).filter(Invoice.created_at >= datetime.utcnow().date()).count() + 1
-    invoice_number = f"INV-{date_str}-{today_count:04d}"
+    # Cap recorded paid_amount at total_amount so change returned to customer does not inflate cash drawer report
+    recorded_paid = round(min(paid_amount, total_amount), 2)
+
+    invoice_number = _next_invoice_number(db)
 
     try:
         invoice = Invoice(
             invoice_number=invoice_number,
-            customer_id=customer_id,
+            customer_id=customer.id if customer else customer_id,
             user_id=user.id,
             subtotal=totals["subtotal"],
             discount=totals["discount"],
             total_amount=total_amount,
-            paid_amount=paid_amount,
+            paid_amount=recorded_paid,
             remaining_amount=remaining,
             payment_method=payment_method,
             notes=notes
@@ -244,10 +284,8 @@ def process_checkout(
         db.flush()
 
         # Update customer balance if debt
-        if remaining > 0 and customer_id:
-            customer = db.query(Customer).filter(Customer.id == customer_id).first()
-            if customer:
-                customer.balance -= remaining
+        if remaining > 0 and customer:
+            customer.balance = round(customer.balance - remaining, 2)
 
         # Create Invoice Items and deduct stock
         for item in cart:

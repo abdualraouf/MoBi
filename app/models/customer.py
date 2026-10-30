@@ -13,7 +13,7 @@ class Customer(Base):
     address = Column(String(200), nullable=True)
     notes = Column(String(255), nullable=True)
     balance = Column(Float, default=0.0, nullable=False)  # Positive = credit, Negative = debt
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
     # Relationships
     invoices = relationship("Invoice", back_populates="customer")

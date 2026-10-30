@@ -150,13 +150,13 @@
             </div>
         </form>
 
-        <!-- Tags Filter Chips -->
+            <!-- Tags Filter Chips -->
         {% if all_tags %}
         <div class="border-t border-slate-100 pt-2 flex items-center gap-2 flex-wrap">
             <span class="text-xs font-bold text-slate-500">فلترة بالمجموعات:</span>
             {% for tag in all_tags %}
             {% set is_selected = tag.id in selected_tags %}
-            <a href="/inventory?tab=products&q={{ q }}&scope={{ scope }}{% if type_id %}&type_id={{ type_id }}{% endif %}&hide_out={{ 'true' if hide_out else '' }}{% for st in selected_tags %}{% if st != tag.id %}&tags={{ st }}{% endif %}{% endfor %}{% if not is_selected %}&tags={{ tag.id }}{% endif %}"
+            <a href="/inventory?tab=products&q={{ q }}&scope={{ scope }}{% if type_id %}&type_id={{ type_id }}{% endif %}{% if hide_out %}&hide_out=true{% endif %}{% for st in selected_tags %}{% if st != tag.id %}&tags={{ st }}{% endif %}{% endfor %}{% if not is_selected %}&tags={{ tag.id }}{% endif %}"
                class="text-xs font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1.5 {% if is_selected %}bg-blue-600 text-white border-blue-600 shadow-sm{% else %}bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100{% endif %}">
                 <span class="w-2 h-2 rounded-full" style="background-color: var(--tag-{{ tag.color }}, #3b82f6);"></span>
                 <span>{{ tag.name }}</span>

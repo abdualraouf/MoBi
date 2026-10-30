@@ -131,14 +131,13 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-300">
                 <label class="block text-xs font-black text-slate-900 mb-1">الكمية المتوفرة</label>
-                {% if selected_type and selected_type.has_unique_attribute %}
-                    <input type="number" name="quantity" value="{{ product.quantity if (product and mode == 'edit') else '1' }}" min="0" max="1"
-                           class="w-full p-2 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center bg-white outline-none">
-                    <p class="text-[10px] text-amber-900 font-bold mt-1">🔒 هذا النوع له خاصية فريدة، لذا كل جهاز يُسجل كوحدة مستقلة بكمية 1.</p>
-                {% else %}
-                    <input type="number" name="quantity" value="{{ product.quantity if product else '1' }}" min="0"
-                           class="w-full p-2 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center outline-none focus:ring-2 focus:ring-blue-500">
-                {% endif %}
+                <input type="number" name="quantity" id="form-prod-quantity"
+                       value="{{ product.quantity if (product and mode == 'edit') else '1' }}"
+                       min="0" {% if selected_type and selected_type.has_unique_attribute %}max="1"{% endif %}
+                       class="w-full p-2 border border-slate-300 rounded-lg text-sm font-black text-slate-900 text-center bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                <p id="unit-qty-hint" class="text-[10px] text-amber-900 font-bold mt-1 {% if not (selected_type and selected_type.has_unique_attribute) %}hidden{% endif %}">
+                    🔒 هذا النوع له خاصية فريدة، لذا كل جهاز يُسجل كوحدة مستقلة بكمية 1.
+                </p>
             </div>
 
             <div>

@@ -5,7 +5,7 @@
     <div class="p-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-950 flex-shrink-0">
         <div class="flex items-center gap-2">
             <button type="button"
-                    hx-get="/pos/picker?mode=type&scope_id={{ lead.type_id }}"
+                    hx-get="/pos/picker?mode={{ origin_mode or 'type' }}&scope_id={{ origin_scope_id or lead.type_id }}"
                     hx-target="#pos-picker-content"
                     class="p-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
                 <span>&rarr;</span>
@@ -31,7 +31,8 @@
         <div class="p-3 rounded-xl border transition flex items-center justify-between gap-3 {% if u.quantity > 0 %}bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:shadow-sm cursor-pointer{% else %}bg-slate-100 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed{% endif %}"
              {% if u.quantity > 0 %}
              hx-post="/pos/add-product?product_id={{ u.id }}"
-             hx-target="#cart-container"
+             hx-target="#pos-cart-container"
+             hx-swap="outerHTML"
              {% endif %}>
             
             <div class="space-y-1">

@@ -27,6 +27,7 @@
                     id="btn-clear-cart"
                     hx-post="/pos/clear-cart"
                     hx-target="#pos-cart-container"
+                    hx-swap="outerHTML"
                     class="bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-900 text-xs font-black px-3.5 py-2.5 rounded-xl border border-slate-300 hover:border-red-300 transition flex items-center space-x-1.5 space-x-reverse shadow-sm min-h-[42px] touch-target active:scale-95">
                 <span>🗑️</span>
                 <span>تفريغ السلة [F9]</span>
@@ -95,22 +96,22 @@
             <div>
                 <label class="block text-xs font-black text-slate-900 mb-1">طريقة الدفع:</label>
                 <div class="grid grid-cols-4 gap-1.5">
-                    <button type="button" @click="paymentMethod = 'cash'"
+                    <button type="button" @click="selectPaymentMethod('cash')"
                             :class="paymentMethod === 'cash' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
                             class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                         💵 كاش
                     </button>
-                    <button type="button" @click="paymentMethod = 'card'"
+                    <button type="button" @click="selectPaymentMethod('card')"
                             :class="paymentMethod === 'card' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
                             class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                         💳 شبكة
                     </button>
-                    <button type="button" @click="paymentMethod = 'transfer'"
+                    <button type="button" @click="selectPaymentMethod('transfer')"
                             :class="paymentMethod === 'transfer' ? 'bg-blue-600 text-white font-black shadow-md border-blue-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
                             class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                         🏦 تحويل
                     </button>
-                    <button type="button" @click="paymentMethod = 'debt'"
+                    <button type="button" @click="selectPaymentMethod('debt')"
                             :class="paymentMethod === 'debt' ? 'bg-amber-600 text-white font-black shadow-md border-amber-700' : 'bg-slate-100 text-slate-900 font-bold hover:bg-slate-200 border-slate-300'"
                             class="py-2 px-1 text-xs rounded-xl transition border text-center font-black min-h-[40px] flex items-center justify-center gap-1 active:scale-95 touch-target">
                         📝 آجل
@@ -122,19 +123,19 @@
             <div>
                 <div class="flex justify-between items-center mb-1">
                     <label class="text-xs font-black text-slate-900">المبلغ المدفوع:</label>
-                    <button type="button" @click="paidAmount = netTotal" class="text-xs text-blue-700 hover:text-blue-900 hover:underline font-black py-0.5 px-1.5 rounded touch-target">
+                    <button type="button" @click="paidManuallyEdited = false; paidAmount = netTotal" class="text-xs text-blue-700 hover:text-blue-900 hover:underline font-black py-0.5 px-1.5 rounded touch-target">
                         سداد كامل المبلغ
                     </button>
                 </div>
-                <input type="number" step="0.5" x-model.number="paidAmount" @input="recalc()"
+                <input type="number" step="0.5" min="0" x-model.number="paidAmount" @input="paidManuallyEdited = true"
                        class="w-full text-center text-xl font-black py-1.5 border-2 border-slate-400 rounded-xl outline-none focus:border-blue-600 text-slate-950 bg-white">
                 
                 <!-- Quick Cash Buttons -->
                 <div class="grid grid-cols-4 gap-1.5 mt-1.5">
-                    <button type="button" @click="paidAmount = 50" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">50</button>
-                    <button type="button" @click="paidAmount = 100" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">100</button>
-                    <button type="button" @click="paidAmount = 200" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">200</button>
-                    <button type="button" @click="paidAmount = 500" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">500</button>
+                    <button type="button" @click="setQuickCash(50)" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">50</button>
+                    <button type="button" @click="setQuickCash(100)" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">100</button>
+                    <button type="button" @click="setQuickCash(200)" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">200</button>
+                    <button type="button" @click="setQuickCash(500)" class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-900 py-1.5 rounded-lg font-black border border-slate-300 hover:border-blue-400 transition min-h-[38px] flex items-center justify-center active:scale-95 touch-target">500</button>
                 </div>
             </div>
 
@@ -282,8 +283,10 @@
 <script>
 function posApp() {
     return {
+        subtotalVal: {{ totals.subtotal if totals else 0 }},
         discount: 0,
-        paidAmount: 0,
+        paidAmount: {{ totals.total if totals else 0 }},
+        paidManuallyEdited: false,
         paymentMethod: 'cash',
         showAddCustomer: false,
         shelfMode: 'types', // 'types' | 'tags'
@@ -314,9 +317,42 @@ function posApp() {
             }
         },
 
-        get rawSubtotal() {
+        syncFromDom() {
             const el = document.getElementById("sync-subtotal");
-            return el ? parseFloat(el.value) || 0 : 0;
+            this.subtotalVal = el ? parseFloat(el.value) || 0 : 0;
+            if (this.subtotalVal <= 0) {
+                this.discount = 0;
+                this.paidAmount = 0;
+                this.paidManuallyEdited = false;
+                return;
+            }
+            if (this.paymentMethod === 'debt') {
+                if (!this.paidManuallyEdited) {
+                    this.paidAmount = 0;
+                }
+            } else if (!this.paidManuallyEdited) {
+                this.paidAmount = this.netTotal;
+            }
+        },
+
+        selectPaymentMethod(method) {
+            this.paymentMethod = method;
+            if (method === 'debt') {
+                this.paidAmount = 0;
+                this.paidManuallyEdited = false;
+            } else {
+                this.paidManuallyEdited = false;
+                this.paidAmount = this.netTotal;
+            }
+        },
+
+        setQuickCash(val) {
+            this.paidAmount = val;
+            this.paidManuallyEdited = true;
+        },
+
+        get rawSubtotal() {
+            return this.subtotalVal;
         },
 
         get netTotal() {
@@ -328,16 +364,21 @@ function posApp() {
         },
 
         recalc() {
-            // Dynamic recalculation
+            if (this.paymentMethod !== 'debt' && !this.paidManuallyEdited) {
+                this.paidAmount = this.netTotal;
+            }
         },
 
         init() {
-            // Keep paid amount in sync when items added
-            setInterval(() => {
-                if (this.paidAmount === 0 && this.netTotal > 0) {
-                    this.paidAmount = this.netTotal;
+            this.syncFromDom();
+            document.body.addEventListener("htmx:afterSwap", (evt) => {
+                if (evt.detail && evt.detail.target && evt.detail.target.id === "pos-cart-container") {
+                    this.syncFromDom();
                 }
-            }, 500);
+            });
+            document.body.addEventListener("htmx:afterSettle", () => {
+                this.syncFromDom();
+            });
         },
 
         doCheckout() {

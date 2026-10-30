@@ -79,8 +79,13 @@
                         <tr>
                             <th class="py-3 px-3">اسم القطعة</th>
                             <th class="py-3 px-3 text-center">الكمية</th>
+                            {% if current_user.role == 'admin' %}
                             <th class="py-3 px-3 text-center">التكلفة على المحل</th>
+                            {% endif %}
                             <th class="py-3 px-3 text-center">السعر للزبون</th>
+                            {% if current_user.role in ['admin', 'technician'] %}
+                            <th class="py-3 px-3 text-center">إرجاع للمخزون</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
@@ -88,12 +93,26 @@
                         <tr class="hover:bg-blue-50/50 transition">
                             <td class="py-3.5 px-3 font-bold text-slate-900">{{ part.part_name }}</td>
                             <td class="py-3.5 px-3 text-center font-black text-slate-900">{{ part.quantity }}</td>
+                            {% if current_user.role == 'admin' %}
                             <td class="py-3.5 px-3 text-center font-bold text-slate-700">{{ "%.2f"|format(part.cost_price) }}</td>
+                            {% endif %}
                             <td class="py-3.5 px-3 text-center font-black text-blue-700 text-base">{{ "%.2f"|format(part.price_charged) }} {{ currency }}</td>
+                            {% if current_user.role in ['admin', 'technician'] %}
+                            <td class="py-3.5 px-3 text-center">
+                                <form method="POST" action="/repairs/{{ ticket.id }}/remove-part/{{ part.id }}"
+                                      onsubmit="return confirm('هل تريد إلغاء صرف هذه القطعة وإرجاع كميتها للمخزون؟');">
+                                    <button type="submit"
+                                            class="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg border border-red-200 transition"
+                                            title="إلغاء صرف القطعة وإرجاعها للمخزون">
+                                        ↩️ إرجاع
+                                    </button>
+                                </form>
+                            </td>
+                            {% endif %}
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="4" class="text-center py-8 text-slate-600 font-bold text-sm">
+                            <td colspan="{% if current_user.role == 'admin' %}5{% elif current_user.role == 'technician' %}4{% else %}3{% endif %}" class="text-center py-8 text-slate-600 font-bold text-sm">
                                 لم يتم استهلاك قطع غيار من المخزون لهذه التذكرة حتى الآن.
                             </td>
                         </tr>
@@ -102,7 +121,7 @@
                 </table>
 
                 <!-- Form to consume a spare part from inventory -->
-                {% if available_parts %}
+                {% if available_parts and current_user.role in ['admin', 'technician'] %}
                 <form method="POST" action="/repairs/{{ ticket.id }}/add-part" class="bg-gray-50 p-3 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center gap-3">
                     <div class="flex-1 w-full">
                         <label class="block text-xs font-bold text-gray-600 mb-1">صرف قطعة غيار من المخزون:</label>

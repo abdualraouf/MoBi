@@ -62,4 +62,22 @@
             </div>
         </div>
     {% endif %}
+    <script>
+        (function() {
+            const hasUnique = {{ 'true' if pt and pt.has_unique_attribute else 'false' }};
+            const qtyInput = document.getElementById('form-prod-quantity');
+            const hint = document.getElementById('unit-qty-hint');
+            if (qtyInput) {
+                if (hasUnique) {
+                    qtyInput.max = '1';
+                    if (parseInt(qtyInput.value || '1', 10) > 1) qtyInput.value = '1';
+                } else {
+                    qtyInput.removeAttribute('max');
+                }
+            }
+            if (hint) {
+                hint.classList.toggle('hidden', !hasUnique);
+            }
+        })();
+    </script>
 </div>

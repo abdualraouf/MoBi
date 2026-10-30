@@ -140,13 +140,12 @@ function handleScannedBarcode(code) {
     // Check if on POS screen
     const posContainer = document.getElementById("pos-cart-container");
     if (posContainer) {
-        // Trigger HTMX post to add product
+        // Trigger HTMX post to add product (sound is played via HX-Trigger scanSuccess/scanError)
         htmx.ajax('POST', '/pos/add-item', {
             target: '#pos-cart-container',
-            swap: 'innerHTML',
+            swap: 'outerHTML',
             values: { query: code }
         }).then(() => {
-            AudioFeedback.playSuccessBeep();
             const input = document.getElementById("barcode-scanner-input");
             if (input) {
                 input.value = "";
@@ -165,6 +164,15 @@ function handleScannedBarcode(code) {
         return;
     }
 }
+
+// Listen for server-triggered scanSuccess / scanError events from HTMX responses
+document.addEventListener("scanSuccess", function () {
+    AudioFeedback.playSuccessBeep();
+});
+
+document.addEventListener("scanError", function () {
+    AudioFeedback.playErrorBeep();
+});
 
 // Window helper for manual audio triggers
 window.MoBiAudio = AudioFeedback;

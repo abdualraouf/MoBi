@@ -16,7 +16,7 @@ class ProductType(Base):
     use_in_repairs = Column(Boolean, default=False, nullable=False)
     sort_order = Column(Integer, default=0, nullable=False, index=True)
     is_archived = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
     attributes = relationship(
         "TypeAttribute",

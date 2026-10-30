@@ -63,7 +63,7 @@
             {% elif g.is_unit_group %}
                 <!-- Unit Group Card (iPhone, etc. with individual units) -->
                 <div class="pos-picker-card hover:shadow-sm"
-                     hx-get="/pos/picker/group/{{ g.key_product_id }}"
+                     hx-get="/pos/picker/group/{{ g.key_product_id }}?mode={{ mode }}&scope_id={{ scope_id }}"
                      hx-target="#pos-picker-content"
                      title="انقر لاختيار الجهاز برقم الـ IMEI">
                     <div>
@@ -90,7 +90,8 @@
                 <!-- Regular Bulk Product Card (Click adds directly to cart) -->
                 <div class="pos-picker-card hover:shadow-sm"
                      hx-post="/pos/add-product?product_id={{ g.key_product_id }}"
-                     hx-target="#cart-container"
+                     hx-target="#pos-cart-container"
+                     hx-swap="outerHTML"
                      title="انقر للإضافة إلى السلة">
                     <div>
                         <div class="flex items-center justify-between gap-1 mb-1">

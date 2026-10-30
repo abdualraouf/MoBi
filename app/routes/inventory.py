@@ -14,6 +14,17 @@ from app.services import inventory_service
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 
+def _safe_return_url(url: Optional[str], default: str = "/inventory") -> str:
+    """Ensure redirect URL is a safe local relative path or same-host URL."""
+    if not url:
+        return default
+    clean = url.strip()
+    if clean.startswith("/") and not clean.startswith("//"):
+        return clean
+    if clean.startswith("http://127.0.0.1") or clean.startswith("http://localhost"):
+        return clean
+    return default
+
 # ==============================================================================
 # Main Inventory Hub (Tabs: Products, Types, Tags)
 # ==============================================================================
@@ -26,7 +37,7 @@ def inventory_main(
     scope: str = "all",
     type_id: Optional[str] = Query(None),
     tags: List[str] = Query(default=[]),
-    hide_out: bool = False,
+    hide_out: Optional[str] = Query(None),
     current_user: User = Depends(require_user),
     db: Session = Depends(get_db)
 ):
@@ -34,9 +45,10 @@ def inventory_main(
     if tab in ("types", "tags") and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="هذه الشاشة مخصصة لمدير النظام فقط")
 
-    # Safely parse integer parameters from HTML forms (empty string becomes None)
+    # Safely parse integer and boolean parameters from HTML forms/links (empty string becomes None/False)
     clean_type_id = int(type_id) if type_id and str(type_id).strip().isdigit() else None
     clean_tags = [int(t) for t in tags if str(t).strip().isdigit()]
+    clean_hide_out = str(hide_out).strip().lower() in ("true", "1", "on", "yes") if hide_out else False
 
     settings = db.query(ShopSettings).first()
     all_types = db.query(ProductType).order_by(ProductType.sort_order.asc(), ProductType.id.asc()).all()
@@ -50,7 +62,7 @@ def inventory_main(
             scope=scope,
             type_id=clean_type_id,
             tag_ids=tuple(clean_tags),
-            hide_out=hide_out
+            hide_out=clean_hide_out
         )
 
     return templates.TemplateResponse(request=request, name="inventory/index.html", context={
@@ -65,7 +77,7 @@ def inventory_main(
         "scope": scope,
         "type_id": clean_type_id,
         "selected_tags": clean_tags,
-        "hide_out": hide_out,
+        "hide_out": clean_hide_out,
         "currency": settings.currency if settings else "د.ل"
     })
 
@@ -208,7 +220,7 @@ async def product_save(
     alert_quantity = int(form.get("alert_quantity") or 3)
     unit = form.get("unit", "قطعة").strip()
     tag_ids = [int(t) for t in form.getlist("tags") if str(t).isdigit()]
-    return_url = form.get("return_url", "/inventory")
+    return_url = _safe_return_url(form.get("return_url", "/inventory"))
 
     pt = db.query(ProductType).filter(ProductType.id == type_id).first()
     if not pt and not product_id:
@@ -218,6 +230,9 @@ async def product_save(
     attr_values = inventory_service.parse_attribute_form(dict(form), target_pt)
 
     try:
+        if not name:
+            raise inventory_service.InventoryError("اسم الصنف إلزامي", {"name": "اسم الصنف إلزامي"})
+
         if product_id:
             product = inventory_service.update_product(
                 db, product_id, name, barcode, buy_price, sell_price, min_sell_price,
@@ -251,6 +266,7 @@ async def product_save(
             "alert_quantity": alert_quantity,
             "unit": unit
         }
+        is_htmx = bool(request.headers.get("HX-Request"))
         return templates.TemplateResponse(
             request=request,
             name="inventory/_product_form.html",
@@ -265,7 +281,7 @@ async def product_save(
                 "error_msg": e.message,
                 "field_errors": e.field_errors
             },
-            status_code=422
+            status_code=200 if is_htmx else 422
         )
 
 
@@ -277,7 +293,7 @@ def product_archive(
     db: Session = Depends(get_db)
 ):
     inventory_service.set_product_archived(db, product_id, True)
-    return RedirectResponse(url=return_url, status_code=303)
+    return RedirectResponse(url=_safe_return_url(return_url), status_code=303)
 
 
 @router.post("/product/{product_id}/restore")
@@ -288,7 +304,7 @@ def product_restore(
     db: Session = Depends(get_db)
 ):
     inventory_service.set_product_archived(db, product_id, False)
-    return RedirectResponse(url=return_url, status_code=303)
+    return RedirectResponse(url=_safe_return_url(return_url), status_code=303)
 
 
 @router.post("/product/{product_id}/move")
@@ -300,7 +316,7 @@ def product_move(
     db: Session = Depends(get_db)
 ):
     inventory_service.move(db, Product, product_id, -1 if direction == "up" else 1)
-    return RedirectResponse(url=return_url, status_code=303)
+    return RedirectResponse(url=_safe_return_url(return_url), status_code=303)
 
 
 @router.post("/product/update-stock")
@@ -312,7 +328,7 @@ def product_update_stock(
     db: Session = Depends(get_db)
 ):
     inventory_service.update_stock(db, product_id, new_quantity)
-    return RedirectResponse(url=return_url, status_code=303)
+    return RedirectResponse(url=_safe_return_url(return_url), status_code=303)
 
 
 # ==============================================================================
@@ -634,11 +650,12 @@ def tag_move(
 def print_barcode_labels(
     request: Request,
     product_id: Optional[str] = Query(None),
-    count: int = 6,
+    count: Optional[str] = Query("6"),
     current_user: User = Depends(require_user),
     db: Session = Depends(get_db)
 ):
     clean_product_id = int(product_id) if product_id and str(product_id).strip().isdigit() else None
+    clean_count = int(count) if count and str(count).strip().isdigit() else 6
     products = db.query(Product).filter(Product.barcode != None, Product.is_active == True).all()
     selected_product = None
     if clean_product_id:
@@ -652,7 +669,7 @@ def print_barcode_labels(
         "current_user": current_user,
         "products": products,
         "selected_product": selected_product,
-        "label_count": max(1, min(count, 60)),
+        "label_count": max(1, min(clean_count, 60)),
         "shop_name": settings.shop_name if settings else "MoBi",
         "currency": settings.currency if settings else "د.ل"
     })

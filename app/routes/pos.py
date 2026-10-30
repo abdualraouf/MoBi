@@ -13,7 +13,7 @@ from app.models.customer import Customer
 from app.models.invoice import Invoice
 from app.models.settings import ShopSettings
 from app.models.user import User
-from app.routes.auth import require_user
+from app.routes.auth import require_user, require_pos_access
 from app.services import pos_service, inventory_service
 
 router = APIRouter(prefix="/pos", tags=["pos"])
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/pos", tags=["pos"])
 @router.get("", response_class=HTMLResponse)
 def pos_main_page(
     request: Request,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     cart = pos_service.get_user_cart(current_user.id)
@@ -40,13 +40,6 @@ def pos_main_page(
         Tag.show_on_shelf == True
     ).order_by(Tag.sort_order.asc(), Tag.id.asc()).all()
 
-    # Initial quick products (up to 24 sellable products)
-    quick_products = db.query(Product).join(ProductType).filter(
-        Product.is_active == True,
-        Product.is_archived == False,
-        ProductType.show_in_pos == True
-    ).order_by(Product.sort_order.asc(), Product.id.asc()).limit(24).all()
-
     return templates.TemplateResponse(request=request, name="pos/index.html", context={
         "current_user": current_user,
         "shop_settings": settings,
@@ -56,7 +49,6 @@ def pos_main_page(
         "customers": customers,
         "shelf_types": shelf_types,
         "shelf_tags": shelf_tags,
-        "quick_products": quick_products,
         "currency": settings.currency if settings else "د.ل"
     })
 
@@ -67,7 +59,7 @@ def pos_picker(
     mode: str = "type",  # "type" or "tag"
     scope_id: Optional[str] = Query(None),
     q: Optional[str] = None,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     clean_scope_id = int(scope_id) if scope_id and str(scope_id).strip().isdigit() else None
@@ -88,7 +80,8 @@ def pos_picker(
                 icon = "🏷️"
             query = query.join(Product.tags).join(Product.product_type).filter(
                 Tag.id == clean_scope_id,
-                ProductType.show_in_pos == True
+                ProductType.show_in_pos == True,
+                ProductType.is_archived == False
             )
         else:
             # mode == "type"
@@ -96,7 +89,11 @@ def pos_picker(
             if pt:
                 title = pt.name
                 icon = pt.icon
-            query = query.filter(Product.type_id == clean_scope_id)
+            query = query.join(Product.product_type).filter(
+                Product.type_id == clean_scope_id,
+                ProductType.show_in_pos == True,
+                ProductType.is_archived == False
+            )
     else:
         query = query.filter(False)
 
@@ -107,7 +104,7 @@ def pos_picker(
             or_(
                 Product.name.ilike(f"%{clean_q}%"),
                 Product.barcode.ilike(f"%{clean_q}%"),
-                Product.attributes.any(ProductAttributeValue.value.ilike(f"%{clean_q}%"))
+                Product.attribute_values.any(ProductAttributeValue.value.ilike(f"%{clean_q}%"))
             )
         )
 
@@ -118,7 +115,7 @@ def pos_picker(
         "title": title,
         "icon": icon,
         "mode": mode,
-        "scope_id": scope_id,
+        "scope_id": clean_scope_id,
         "q": clean_q,
         "groups": groups,
         "currency": settings.currency if settings else "د.ل"
@@ -129,7 +126,9 @@ def pos_picker(
 def pos_picker_units(
     request: Request,
     product_id: int,
-    current_user: User = Depends(require_user),
+    mode: str = "type",
+    scope_id: Optional[str] = Query(None),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     lead = db.query(Product).filter(Product.id == product_id).first()
@@ -137,6 +136,7 @@ def pos_picker_units(
         raise HTTPException(status_code=404, detail="المنتج غير موجود")
 
     settings = db.query(ShopSettings).first()
+    clean_scope_id = int(scope_id) if scope_id and str(scope_id).strip().isdigit() else lead.type_id
 
     # Find all units of this model (same type_id and name)
     units = db.query(Product).filter(
@@ -149,6 +149,8 @@ def pos_picker_units(
     return templates.TemplateResponse(request=request, name="pos/_picker_units.html", context={
         "lead": lead,
         "units": units,
+        "origin_mode": mode if mode in ("type", "tag") else "type",
+        "origin_scope_id": clean_scope_id,
         "currency": settings.currency if settings else "د.ل"
     })
 
@@ -157,7 +159,7 @@ def pos_picker_units(
 def pos_add_product(
     request: Request,
     product_id: int = Query(...),
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     success, message = pos_service.add_to_cart_by_product_id(db, current_user.id, product_id)
@@ -165,7 +167,8 @@ def pos_add_product(
     totals = pos_service.calculate_cart_totals(current_user.id)
     settings = db.query(ShopSettings).first()
 
-    status_code = 200 if success else 400
+    is_htmx = bool(request.headers.get("HX-Request"))
+    status_code = 200 if (success or is_htmx) else 400
     headers = {"HX-Trigger": "scanSuccess" if success else "scanError"}
 
     return templates.TemplateResponse(request=request, name="pos/cart_partial.html", context={
@@ -180,7 +183,7 @@ def pos_add_product(
 def pos_add_item(
     request: Request,
     query: str = Form(...),
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     success, message = pos_service.add_to_cart_by_code(db, current_user.id, query)
@@ -188,7 +191,8 @@ def pos_add_item(
     totals = pos_service.calculate_cart_totals(current_user.id)
     settings = db.query(ShopSettings).first()
 
-    status_code = 200 if success else 400
+    is_htmx = bool(request.headers.get("HX-Request"))
+    status_code = 200 if (success or is_htmx) else 400
     headers = {"HX-Trigger": "scanSuccess" if success else "scanError"}
 
     return templates.TemplateResponse(request=request, name="pos/cart_partial.html", context={
@@ -204,7 +208,7 @@ def pos_update_qty(
     request: Request,
     cart_id: str = Form(...),
     delta: int = Form(...),
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     pos_service.update_cart_quantity(current_user.id, cart_id, delta)
@@ -223,7 +227,7 @@ def pos_update_qty(
 def pos_remove_item(
     request: Request,
     cart_id: str = Form(...),
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     pos_service.remove_from_cart(current_user.id, cart_id)
@@ -241,7 +245,7 @@ def pos_remove_item(
 @router.post("/clear-cart", response_class=HTMLResponse)
 def pos_clear_cart(
     request: Request,
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
     pos_service.clear_user_cart(current_user.id)
@@ -257,21 +261,31 @@ def pos_clear_cart(
 
 @router.post("/checkout")
 def pos_checkout(
-    customer_id: Optional[int] = Form(None),
+    customer_id: Optional[str] = Form(None),
     payment_method: str = Form("cash"),
-    paid_amount: float = Form(0.0),
-    discount: float = Form(0.0),
+    paid_amount: Optional[str] = Form("0"),
+    discount: Optional[str] = Form("0"),
     notes: Optional[str] = Form(None),
-    current_user: User = Depends(require_user),
+    current_user: User = Depends(require_pos_access),
     db: Session = Depends(get_db)
 ):
+    clean_customer_id = int(customer_id) if customer_id and str(customer_id).strip().isdigit() else None
+    try:
+        clean_paid = float(paid_amount) if paid_amount and str(paid_amount).strip() else 0.0
+    except ValueError:
+        clean_paid = 0.0
+    try:
+        clean_discount = float(discount) if discount and str(discount).strip() else 0.0
+    except ValueError:
+        clean_discount = 0.0
+
     invoice, msg = pos_service.process_checkout(
         db=db,
         user=current_user,
-        customer_id=customer_id,
+        customer_id=clean_customer_id,
         payment_method=payment_method,
-        paid_amount=paid_amount,
-        discount=discount,
+        paid_amount=clean_paid,
+        discount=clean_discount,
         notes=notes
     )
 

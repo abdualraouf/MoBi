@@ -18,7 +18,7 @@ class Invoice(Base):
     remaining_amount = Column(Float, default=0.0, nullable=False)
     payment_method = Column(String(30), default="cash", nullable=False)  # "cash", "card", "transfer", "debt"
     notes = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
     # Relationships
     customer = relationship("Customer", back_populates="invoices")

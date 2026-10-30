@@ -339,20 +339,215 @@ def run_tests():
     db.close()
     print("  -> Passed. Spare part consumed from inventory and deducted from stock.")
 
-    # 15. Test Inventory Search & Scope Filtering
-    print("\n[15/15] Testing Inventory Search by Attribute & Scope...")
+    # 15. Test Inventory Search by Attribute & Scope Filtering
+    print("\n[15/20] Testing Inventory Search by Attribute & Scope...")
     # Search by attribute value "WATCH123456"
     search_res = client.get("/inventory?tab=products&q=WATCH123456")
     assert search_res.status_code == 200
     assert "Apple Watch Ultra 2" in search_res.text
 
-    # Scope = sellable
-    sellable_res = client.get("/inventory?tab=products&scope=sellable")
+    # Scope = sellable & empty query params resilience (e.g. hide_out=&type_id=)
+    sellable_res = client.get("/inventory?tab=products&scope=sellable&hide_out=&type_id=")
     assert sellable_res.status_code == 200
     assert "Anker" in sellable_res.text
     # Spare parts must not appear in sellable scope
     assert "شاشة Samsung Galaxy A54" not in sellable_res.text
     print("  -> Passed. Inventory search by attribute and scope filters verified.")
+
+    # 16. Test POS Picker Search (Regression test for AttributeError) & Tag Drilldown Context
+    print("\n[16/20] Testing POS Picker Live Search & Tag Mode Back-Button Context...")
+    picker_search_res = client.get(f"/pos/picker?mode=type&scope_id={type_id}&q=WATCH123456")
+    assert picker_search_res.status_code == 200
+    assert "Apple Watch Ultra 2" in picker_search_res.text
+
+    drilldown_tag_res = client.get(f"/pos/picker/group/{watch1.id}?mode=tag&scope_id=2")
+    assert drilldown_tag_res.status_code == 200
+    assert "mode=tag&scope_id=2" in drilldown_tag_res.text
+    assert 'hx-target="#pos-cart-container"' in drilldown_tag_res.text
+    print("  -> Passed. POS Picker search and unit drilldown context verified.")
+
+    # 17. Test POS Accounting Guardrails (Walk-in Debt Block, min_sell_price Floor, Paid Capping)
+    print("\n[17/20] Testing POS Accounting Guardrails (Walk-in Debt, Min Price, Change Cap)...")
+    # Clear cart and add Anker charger (sell_price=55, min_sell_price=50)
+    client.post("/pos/clear-cart")
+    client.post("/pos/add-item", data={"query": "6934177701234"})
+
+    # 17a: Walk-in customer (id=1, phone=0000000000) cannot take debt
+    walkin_debt_res = client.post("/pos/checkout", data={
+        "customer_id": 1,
+        "payment_method": "debt",
+        "paid_amount": 10.0,
+        "discount": 0.0
+    })
+    assert walkin_debt_res.status_code == 400
+    assert "زبون نقدي عام" in walkin_debt_res.json()["message"]
+
+    # 17b: Switch to Cashier -> cannot discount below min_sell_price (55 - 20 = 35 < 50)
+    client.cookies.set(SESSION_COOKIE_NAME, cashier_cookie)
+    client.post("/pos/clear-cart")
+    client.post("/pos/add-item", data={"query": "6934177701234"})
+    excess_disc_res = client.post("/pos/checkout", data={
+        "customer_id": 1,
+        "payment_method": "cash",
+        "paid_amount": 35.0,
+        "discount": 20.0
+    })
+    assert excess_disc_res.status_code == 400
+    assert "الحد المسموح" in excess_disc_res.json()["message"]
+
+    # 17c: Cashier checkout with excess cash tendered (pays 100 for 55 item) -> paid_amount capped at 55
+    overpay_res = client.post("/pos/checkout", data={
+        "customer_id": 1,
+        "payment_method": "cash",
+        "paid_amount": 100.0,
+        "discount": 0.0
+    })
+    assert overpay_res.status_code == 200
+    overpay_data = overpay_res.json()
+    assert overpay_data["success"] is True
+    db = SessionLocal()
+    from app.models.invoice import Invoice
+    inv_overpay = db.query(Invoice).filter(Invoice.id == overpay_data["invoice_id"]).first()
+    assert inv_overpay.paid_amount == 55.0, f"Expected capped paid_amount=55.0, got {inv_overpay.paid_amount}"
+    assert inv_overpay.remaining_amount == 0.0
+    db.close()
+    print("  -> Passed. Walk-in debt blocked, min_sell_price enforced for cashier, change capped.")
+
+    # Restore Admin session
+    client.cookies.set(SESSION_COOKIE_NAME, admin_cookie)
+
+    # 18. Test Customer Debt Creation, Debt Settlement, and Financial Reports
+    print("\n[18/20] Testing Customer Debt Payment & Reports Accuracy...")
+    # Create a named customer
+    client.post("/customers/create", data={
+        "name": "خالد المنصور",
+        "phone": "0912345678",
+        "address": "طرابلس"
+    }, follow_redirects=False)
+    db = SessionLocal()
+    from app.models.customer import Customer
+    named_cust = db.query(Customer).filter(Customer.phone == "0912345678").first()
+    named_cust_id = named_cust.id
+    db.close()
+
+    # Sell Anker charger (55) on credit (paid 15 -> remaining debt 40 -> balance -40)
+    client.post("/pos/clear-cart")
+    client.post("/pos/add-item", data={"query": "6934177701234"})
+    credit_sale = client.post("/pos/checkout", data={
+        "customer_id": named_cust_id,
+        "payment_method": "debt",
+        "paid_amount": 15.0,
+        "discount": 0.0
+    })
+    assert credit_sale.status_code == 200
+
+    db = SessionLocal()
+    named_cust = db.query(Customer).filter(Customer.id == named_cust_id).first()
+    assert named_cust.balance == -40.0, f"Expected customer balance -40.0, got {named_cust.balance}"
+    db.close()
+
+    # Pay 30 of debt
+    pay_debt_res = client.post(f"/customers/{named_cust_id}/pay-debt", data={
+        "amount": 30.0,
+        "notes": "دفعة نقدية أولى"
+    }, follow_redirects=False)
+    assert pay_debt_res.status_code in [302, 303]
+
+    db = SessionLocal()
+    named_cust = db.query(Customer).filter(Customer.id == named_cust_id).first()
+    assert named_cust.balance == -10.0, f"Expected customer balance -10.0 after payment, got {named_cust.balance}"
+    db.close()
+
+    # Check Reports across periods
+    for period in ["today", "week", "month", "all"]:
+        rep_res = client.get(f"/reports?period={period}")
+        assert rep_res.status_code == 200
+        assert "صافي الأرباح الكلي" in rep_res.text
+    print("  -> Passed. Customer debt recorded, settled, and reports verified across all periods.")
+
+    # 19. Test Repair Part Removal & Role Separation (Technician vs Cashier)
+    print("\n[19/20] Testing Repair Part Removal & Strict Role Separation...")
+    db = SessionLocal()
+    from app.models.repair import RepairPart
+    consumed_part = db.query(RepairPart).filter(RepairPart.ticket_id == ticket.id).first()
+    assert consumed_part is not None
+    part_id = consumed_part.id
+    prod_id = consumed_part.product_id
+    qty_before_return = db.query(Product).filter(Product.id == prod_id).first().quantity
+    db.close()
+
+    # Remove part from ticket -> restores stock
+    rem_part_res = client.post(f"/repairs/{ticket.id}/remove-part/{part_id}", follow_redirects=False)
+    assert rem_part_res.status_code in [302, 303]
+
+    db = SessionLocal()
+    qty_after_return = db.query(Product).filter(Product.id == prod_id).first().quantity
+    assert qty_after_return == qty_before_return + 1, "Spare part stock was not restored upon removal!"
+    db.close()
+
+    # Cashier cannot consume spare parts in /repairs/{id}/add-part
+    client.cookies.set(SESSION_COOKIE_NAME, cashier_cookie)
+    cashier_add_part = client.post(f"/repairs/{ticket.id}/add-part", data={"product_id": prod_id, "quantity": 1})
+    assert cashier_add_part.status_code == 403
+
+    # Login as Technician
+    login_tech = client.post("/auth/login", data={"username": "tech", "password": "tech123"}, follow_redirects=False)
+    assert login_tech.status_code in [302, 303]
+    assert login_tech.headers["location"] == "/repairs"
+    tech_cookie = login_tech.cookies.get(SESSION_COOKIE_NAME)
+    client.cookies.set(SESSION_COOKIE_NAME, tech_cookie)
+
+    # Technician can access /repairs and ticket detail, but cost_price column is hidden
+    tech_ticket_page = client.get(f"/repairs/{ticket.id}")
+    assert tech_ticket_page.status_code == 200
+    assert "التكلفة على المحل" not in tech_ticket_page.text
+
+    # Technician cannot access /pos or /customers
+    assert client.get("/pos").status_code == 403
+    assert client.get("/customers").status_code == 403
+    print("  -> Passed. Spare part return restored stock; Technician & Cashier role boundaries enforced.")
+
+    # Restore Admin session
+    client.cookies.set(SESSION_COOKIE_NAME, admin_cookie)
+
+    # 20. Test System Security, User Management, and Atomic SQLite Backup
+    print("\n[20/20] Testing Window Security, Safe Redirects, User Admin, & Atomic Backup...")
+    # Cross-origin request to /system/window/minimize must be rejected with 403
+    csrf_win = client.post("/system/window/minimize", headers={"Origin": "http://evil.example.com"})
+    assert csrf_win.status_code == 403
+
+    # External return_url in inventory must be sanitized to /inventory
+    ext_redir = client.post(f"/inventory/product/{watch1.id}/archive", data={
+        "return_url": "https://evil.example.com/phish"
+    }, follow_redirects=False)
+    assert ext_redir.status_code in [302, 303]
+    assert ext_redir.headers["location"] == "/inventory"
+
+    # Admin creates a new user & changes password
+    create_u = client.post("/settings/users/create", data={
+        "username": "cashier2",
+        "full_name": "كاشير مسائي",
+        "password": "pass1234",
+        "role": "cashier"
+    }, follow_redirects=False)
+    assert create_u.status_code in [302, 303]
+    db = SessionLocal()
+    u2 = db.query(User).filter(User.username == "cashier2").first()
+    assert u2 is not None
+    u2_id = u2.id
+    db.close()
+
+    # Toggle user active status
+    client.post(f"/settings/users/{u2_id}/toggle", follow_redirects=False)
+    db = SessionLocal()
+    assert db.query(User).filter(User.id == u2_id).first().is_active is False
+    db.close()
+
+    # Atomic SQLite backup download
+    backup_res = client.get("/settings/backup-db")
+    assert backup_res.status_code == 200
+    assert backup_res.content[:16] == b"SQLite format 3\x00", "Backup file is not a valid SQLite database!"
+    print("  -> Passed. Security headers, redirects, user management, and atomic SQLite backup verified.")
 
     # Cleanup Test Database
     print("\nCleaning up isolated test database...")
@@ -370,7 +565,7 @@ def run_tests():
     print("  -> Cleanup complete. Production database remained 100% untouched.")
 
     print("\n" + "=" * 70)
-    print("  [SUCCESS] ALL 15 COMPREHENSIVE TESTS PASSED! SYSTEM IS 100% OPERATIONAL.")
+    print("  [SUCCESS] ALL 20 COMPREHENSIVE TESTS PASSED! SYSTEM IS 100% OPERATIONAL.")
     print("=" * 70)
 
 if __name__ == "__main__":

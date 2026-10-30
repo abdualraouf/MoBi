@@ -75,6 +75,7 @@
                 {% if current_user %}
                 <nav class="hidden md:flex items-center gap-5">
                     
+                    {% if current_user.role in ['admin', 'cashier'] %}
                     <!-- POS -->
                     <a href="/pos" class="nav-tab-pill {% if active_page == 'pos' %}active{% endif %}" title="نقطة البيع">
                         <svg class="nav-icon" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,6 +83,7 @@
                         </svg>
                         <span class="nav-label">نقطة البيع</span>
                     </a>
+                    {% endif %}
 
                     <!-- Inventory -->
                     <a href="/inventory" class="nav-tab-pill {% if active_page == 'inventory' %}active{% endif %}" title="المخزون">
@@ -99,6 +101,7 @@
                         <span class="nav-label">الصيانة</span>
                     </a>
 
+                    {% if current_user.role in ['admin', 'cashier'] %}
                     <!-- Customers -->
                     <a href="/customers" class="nav-tab-pill {% if active_page == 'customers' %}active{% endif %}" title="العملاء">
                         <svg class="nav-icon" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,6 +109,7 @@
                         </svg>
                         <span class="nav-label">العملاء</span>
                     </a>
+                    {% endif %}
 
                     {% if current_user.role == 'admin' %}
                     <!-- Reports -->

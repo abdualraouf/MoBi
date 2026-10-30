@@ -51,6 +51,7 @@
                                     hx-post="/pos/update-qty"
                                     hx-vals='{"cart_id": "{{ item.cart_id }}", "delta": -1}'
                                     hx-target="#pos-cart-container"
+                                    hx-swap="outerHTML"
                                     title="إنقاص الكمية"
                                     class="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center bg-slate-100 hover:bg-red-100 hover:text-red-700 text-slate-900 font-black transition text-lg active:scale-95 touch-target">
                                 -
@@ -60,6 +61,7 @@
                                     hx-post="/pos/update-qty"
                                     hx-vals='{"cart_id": "{{ item.cart_id }}", "delta": 1}'
                                     hx-target="#pos-cart-container"
+                                    hx-swap="outerHTML"
                                     title="زيادة الكمية"
                                     class="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center bg-slate-100 hover:bg-emerald-100 hover:text-emerald-700 text-slate-900 font-black transition text-lg active:scale-95 touch-target">
                                 +
@@ -75,6 +77,7 @@
                                 hx-post="/pos/remove-item"
                                 hx-vals='{"cart_id": "{{ item.cart_id }}"}'
                                 hx-target="#pos-cart-container"
+                                hx-swap="outerHTML"
                                 title="حذف الصنف"
                                 class="w-10 h-10 min-w-[40px] min-h-[40px] text-red-600 hover:text-white hover:bg-red-600 font-black text-lg transition rounded-xl border border-red-200 hover:border-red-600 inline-flex items-center justify-center active:scale-95 shadow-sm touch-target">
                             ✕

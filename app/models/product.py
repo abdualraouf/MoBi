@@ -19,7 +19,7 @@ class Product(Base):
     unit = Column(String(50), default="قطعة", nullable=False)
     sort_order = Column(Integer, default=0, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
     @hybrid_property
     def is_archived(self) -> bool:

@@ -29,6 +29,8 @@ a = Analysis(
         'bcrypt',
         'itsdangerous',
         'python_multipart',
+        'PIL',
+        'PIL.Image',
         'webview',
         'webview.platforms.winforms',
         'clr',

@@ -52,19 +52,32 @@ def favicon():
 
 @app.get("/")
 def root_index(request: Request):
-    """Redirect root path to POS or login based on active session."""
+    """Redirect root path to POS/Repairs or login based on active session."""
     db = SessionLocal()
     try:
         user = get_current_user(request, db)
         if user:
-            return RedirectResponse(url="/pos", status_code=303)
+            target = "/pos" if user.role in ("admin", "cashier") else "/repairs"
+            return RedirectResponse(url=target, status_code=303)
         return RedirectResponse(url="/auth/login", status_code=303)
     finally:
         db.close()
 
+def _verify_local_window_request(request: Request):
+    """Ensure window control requests originate locally from the application itself."""
+    sec_site = request.headers.get("sec-fetch-site", "")
+    if sec_site and sec_site not in ("same-origin", "none"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Forbidden cross-site request")
+    origin = request.headers.get("origin", "")
+    if origin and not (origin.startswith("http://127.0.0.1") or origin.startswith("http://localhost")):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Forbidden origin")
+
 @app.post("/system/window/minimize")
 def window_minimize(request: Request):
     """Minimize desktop window to taskbar."""
+    _verify_local_window_request(request)
     w = getattr(request.app.state, "window", None)
     if w:
         try:
@@ -76,6 +89,7 @@ def window_minimize(request: Request):
 @app.post("/system/window/close")
 def window_close(request: Request):
     """Close desktop window cleanly and exit process with code 0."""
+    _verify_local_window_request(request)
     w = getattr(request.app.state, "window", None)
     import threading, time, os
     def shutdown():

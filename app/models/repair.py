@@ -37,7 +37,7 @@ class RepairTicket(Base):
     warranty_days = Column(Integer, default=7, nullable=False)
 
     # Timestamps
-    received_at = Column(DateTime, default=datetime.utcnow)
+    received_at = Column(DateTime, default=datetime.now)
     delivered_at = Column(DateTime, nullable=True)
 
     # Relationships
